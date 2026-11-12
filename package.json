@@ -1,0 +1,88 @@
+{
+  "name": "nqs-chart-builder",
+  "version": "0.1.6",
+  "description": "CÃ´ng cá»¥ váº½ biá»ƒu Ä‘á»“ SVG tÆ°Æ¡ng tÃ¡c cho NgÆ°á»i Quan SÃ¡t",
+  "main": "dist-electron/main.js",
+  "private": true,
+  "scripts": {
+    "build:electron": "node scripts/build-electron.js",
+    "dev": "npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build",
+    "start": "npm run build:electron && electron .",
+    "dist": "node scripts/bump-version.js && vite build && npm run build:electron && electron-builder",
+    "dist:mac": "vite build && npm run build:electron && electron-builder --mac --universal",
+    "test":"node scripts/validate-specs.js"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.1.0",
+    "d3": "^7.9.0",
+    "electron-updater": "^6.8.11",
+    "exceljs": "^4.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.21.5",
+    "vite": "^5.4.11",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "vn.nguoiquansat.chartbuilder",
+    "productName": "NQS Chart Builder",
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "forceCodeSigning": false,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "artifactName": "NQS-Chart-Builder-${version}-mac-${arch}.${ext}"
+    },
+    "afterPack": "scripts/adhoc-sign.js",
+    "nsis": {
+      "artifactName": "NQS-Chart-Builder-Setup-${version}.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Blan1998",
+        "repo": "nqs-chart-builder"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "logos",
+        "to": "logos",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

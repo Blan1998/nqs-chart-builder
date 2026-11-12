@@ -1,0 +1,92 @@
+{
+  "id": "lineRank",
+  "label": "Đường xếp hạng theo năm",
+  "group": "Theo thời gian",
+  "layout": "wide",
+  "keepDefaultNames": true,
+  "defaultSeries": [
+    "1960",
+    "1961",
+    "1962",
+    "1963",
+    "1964",
+    "1965",
+    "1966"
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên đối tượng cần so sánh",
+      "example": "Argentina"
+    }
+  ],
+  "options": [
+    {
+      "key": "topN",
+      "label": "Số đường hiển thị",
+      "type": "number",
+      "default": 8,
+      "min": 2,
+      "max": 15
+    },
+    {
+      "key": "mode",
+      "label": "Kiểu hiển thị",
+      "type": "select",
+      "choices": [
+        "value",
+        "rank"
+      ],
+      "default": "value"
+    },
+    {
+      "key": "showEndLabels",
+      "label": "Nhãn cuối đường",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "lineWidth",
+      "label": "Độ đậm của đường",
+      "type": "number",
+      "default": 2.5,
+      "min": 0.5,
+      "max": 10
+    },
+    {
+      "key": "markerShape",
+      "label": "Kiểu điểm đánh dấu",
+      "type": "select",
+      "choices": [
+        "circle",
+        "square",
+        "diamond",
+        "triangle",
+        "star"
+      ],
+      "default": "circle"
+    },
+    {
+      "key": "markerSize",
+      "label": "Kích cỡ điểm đánh dấu",
+      "type": "number",
+      "default": 4,
+      "min": 0,
+      "max": 14
+    }
+  ],
+  "validation": [
+    "Không trùng tên quốc gia",
+    "Giá trị phải là số"
+  ],
+  "interactions": [
+    "tooltip"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

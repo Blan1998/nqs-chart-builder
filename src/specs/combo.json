@@ -1,0 +1,116 @@
+{
+  "id": "combo",
+  "label": "Kết hợp cột và đường",
+  "group": "So sánh",
+  "layout": "wide",
+  "defaultSeries": [
+    {
+      "name": "Doanh thu thuần",
+      "kind": "bar"
+    },
+    {
+      "name": "Lợi nhuận sau thuế",
+      "kind": "line"
+    }
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Mốc hoặc đối tượng trên trục X",
+      "example": "Q4/2024"
+    }
+  ],
+  "options": [
+    {
+      "key": "leftUnit",
+      "label": "Đơn vị trục trái (cột)",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "rightUnit",
+      "label": "Đơn vị trục phải (đường)",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 4
+    },
+    {
+      "key": "startAtZero",
+      "label": "Các trục bắt đầu từ 0",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLabels",
+      "label": "Nhãn dữ liệu",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "lineWidth",
+      "label": "Độ đậm của đường",
+      "type": "number",
+      "default": 2.5,
+      "min": 0.5,
+      "max": 10
+    },
+    {
+      "key": "markerShape",
+      "label": "Kiểu điểm đánh dấu",
+      "type": "select",
+      "choices": [
+        "circle",
+        "square",
+        "diamond",
+        "triangle",
+        "star"
+      ],
+      "default": "circle"
+    },
+    {
+      "key": "markerSize",
+      "label": "Kích cỡ điểm đánh dấu",
+      "type": "number",
+      "default": 6,
+      "min": 0,
+      "max": 14
+    },
+    {
+      "key": "labelInside",
+      "label": "Số liệu nằm trong cột (chữ trắng)",
+      "type": "boolean",
+      "default": false
+    }
+  ],
+  "validation": [
+    "Không trùng mốc thời gian",
+    "Mỗi chuỗi phải có tên và tên không trùng nhau",
+    "Giá trị phải là số",
+    "Chuỗi dạng cột dùng trục trái, chuỗi dạng đường dùng trục phải"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

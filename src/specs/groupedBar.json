@@ -1,0 +1,84 @@
+{
+  "id": "groupedBar",
+  "label": "Cột cạnh nhau (so sánh)",
+  "group": "So sánh",
+  "layout": "wide",
+  "defaultSeries": [
+    "Số lượng nhân viên",
+    "Số lượng máy móc"
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Nhóm trên trục X, ví dụ tên đội hoặc năm",
+      "example": "Bán hàng"
+    }
+  ],
+  "options": [
+    {
+      "key": "orientation",
+      "label": "Chiều",
+      "type": "select",
+      "choices": [
+        "vertical",
+        "horizontal"
+      ],
+      "default": "vertical"
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLabels",
+      "label": "Nhãn dữ liệu",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "startAtZero",
+      "label": "Trục bắt đầu từ 0",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 4
+    },
+    {
+      "key": "labelInside",
+      "label": "Số liệu nằm trong cột (chữ trắng)",
+      "type": "boolean",
+      "default": false
+    }
+  ],
+  "validation": [
+    "Không trùng tên danh mục",
+    "Mỗi chuỗi phải có tên và tên không trùng nhau",
+    "Giá trị phải là số"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

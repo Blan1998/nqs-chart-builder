@@ -1,0 +1,85 @@
+{
+  "id": "pie",
+  "label": "Pie (tròn)",
+  "group": "Tỷ lệ",
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên từng phần của biểu đồ",
+      "example": "Nhóm A"
+    },
+    {
+      "key": "value",
+      "label": "Giá trị",
+      "type": "number",
+      "required": true,
+      "min": 0,
+      "description": "Giá trị của phần, không âm",
+      "example": 35
+    }
+  ],
+  "options": [
+    {
+      "key": "shape",
+      "label": "Dạng",
+      "type": "select",
+      "choices": [
+        "pie",
+        "donut"
+      ],
+      "default": "pie"
+    },
+    {
+      "key": "showAs",
+      "label": "Hiển thị",
+      "type": "select",
+      "choices": [
+        "percent",
+        "value"
+      ],
+      "default": "percent"
+    },
+    {
+      "key": "showLabels",
+      "label": "Hiển thị nhãn",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "startAngle",
+      "label": "Góc bắt đầu (độ)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 360
+    },
+    {
+      "key": "highlightCategory",
+      "label": "Phần cần nhấn mạnh",
+      "type": "category-ref",
+      "default": null
+    }
+  ],
+  "validation": [
+    "Tổng các giá trị phải lớn hơn 0",
+    "Không có hai dòng trùng tên phân loại"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

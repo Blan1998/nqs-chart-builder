@@ -1,0 +1,32 @@
+name: Build macOS
+
+# Chạy khi đẩy tag phiên bản (ví dụ v0.1.7) hoặc bấm tay trong tab Actions.
+# Tag phải trùng "version" trong package.json để bản Mac và bản Windows cùng một Release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Nhúng API key (tuỳ chọn, giống ai-key.txt ở bản Windows)
+        env:
+          AI_KEY: ${{ secrets.AI_KEY }}
+        run: |
+          if [ -n "$AI_KEY" ]; then printf '%s' "$AI_KEY" > ai-key.txt; fi
+      - run: npx vite build
+      - run: npm run build:electron
+      - name: Đóng gói và đẩy lên GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --universal --publish always

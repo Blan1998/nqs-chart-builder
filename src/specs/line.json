@@ -1,0 +1,124 @@
+{
+  "id": "line",
+  "label": "Line (đường)",
+  "group": "Xu hướng",
+  "columns": [
+    {
+      "key": "x",
+      "label": "Danh mục (trục X)",
+      "type": "category",
+      "required": true,
+      "description": "Mốc thời gian hoặc nhãn trục X, giữ đúng thứ tự tăng dần",
+      "example": "2024-Q1"
+    },
+    {
+      "key": "series",
+      "label": "Tên chuỗi",
+      "type": "series-name",
+      "required": true,
+      "description": "Tên chuỗi dữ liệu, có thể nhiều chuỗi",
+      "example": "Doanh thu"
+    },
+    {
+      "key": "value",
+      "label": "Giá trị",
+      "type": "number",
+      "required": true,
+      "description": "Giá trị của chuỗi tại mốc X",
+      "example": 42.5
+    }
+  ],
+  "layout": "long",
+  "options": [
+    {
+      "key": "lineStyle",
+      "label": "Kiểu đường",
+      "type": "select",
+      "choices": [
+        "solid",
+        "dashed",
+        "dotted"
+      ],
+      "default": "solid"
+    },
+    {
+      "key": "showMarkers",
+      "label": "Hiển thị marker",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "interpolation",
+      "label": "Nội suy",
+      "type": "select",
+      "choices": [
+        "linear",
+        "monotone",
+        "step"
+      ],
+      "default": "linear"
+    },
+    {
+      "key": "showLabels",
+      "label": "Nhãn dữ liệu",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showArea",
+      "label": "Tô vùng dưới đường",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "lineWidth",
+      "label": "Độ đậm của đường",
+      "type": "number",
+      "default": 2.5,
+      "min": 0.5,
+      "max": 10
+    },
+    {
+      "key": "markerShape",
+      "label": "Kiểu điểm đánh dấu",
+      "type": "select",
+      "choices": [
+        "circle",
+        "square",
+        "diamond",
+        "triangle",
+        "star"
+      ],
+      "default": "circle"
+    },
+    {
+      "key": "markerSize",
+      "label": "Kích cỡ điểm đánh dấu",
+      "type": "number",
+      "default": 4,
+      "min": 0,
+      "max": 14
+    }
+  ],
+  "validation": [
+    "Trục X không được trùng lặp trong cùng một chuỗi",
+    "Mỗi chuỗi nên có cùng tập mốc X, thiếu mốc sẽ được báo lỗi",
+    "Giá trị phải là số"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle",
+    "zoomPan"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

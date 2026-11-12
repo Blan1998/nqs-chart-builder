@@ -1,0 +1,90 @@
+{
+  "id": "bar",
+  "label": "Bar / Column (cột)",
+  "group": "So sánh",
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên từng cột hoặc thanh",
+      "example": "2024"
+    },
+    {
+      "key": "value",
+      "label": "Giá trị",
+      "type": "number",
+      "required": true,
+      "description": "Giá trị của danh mục",
+      "example": 120
+    }
+  ],
+  "options": [
+    {
+      "key": "orientation",
+      "label": "Chiều",
+      "type": "select",
+      "choices": [
+        "vertical",
+        "horizontal"
+      ],
+      "default": "vertical"
+    },
+    {
+      "key": "sort",
+      "label": "Sắp xếp",
+      "type": "select",
+      "choices": [
+        "none",
+        "asc",
+        "desc"
+      ],
+      "default": "none"
+    },
+    {
+      "key": "showLabels",
+      "label": "Nhãn dữ liệu",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "startAtZero",
+      "label": "Trục bắt đầu từ 0",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 4
+    },
+    {
+      "key": "labelInside",
+      "label": "Số liệu nằm trong cột (chữ trắng)",
+      "type": "boolean",
+      "default": false
+    }
+  ],
+  "validation": [
+    "Giá trị phải là số",
+    "Nếu trục không bắt đầu từ 0, cảnh báo người dùng về cách đọc biểu đồ"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

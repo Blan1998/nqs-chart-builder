@@ -1,0 +1,71 @@
+{
+  "id": "stackedBar",
+  "label": "Cột chồng (cơ cấu)",
+  "group": "So sánh",
+  "layout": "wide",
+  "defaultSeries": [
+    "Chuyển nhượng BĐS",
+    "Cho thuê BĐS",
+    "Dịch vụ du lịch",
+    "Bán lẻ",
+    "Khác"
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Mốc hoặc đối tượng, mỗi cột là một danh mục",
+      "example": "2019"
+    }
+  ],
+  "options": [
+    {
+      "key": "percent",
+      "label": "Tỷ trọng 100%",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "showLabels",
+      "label": "Nhãn trong từng khúc",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 4
+    }
+  ],
+  "validation": [
+    "Không trùng mốc thời gian",
+    "Mỗi chuỗi phải có tên và tên không trùng nhau",
+    "Giá trị nên không âm"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

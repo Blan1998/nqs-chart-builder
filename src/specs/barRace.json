@@ -1,0 +1,62 @@
+{
+  "id": "barRace",
+  "label": "Đua thanh theo năm",
+  "group": "Theo thời gian",
+  "layout": "wide",
+  "keepDefaultNames": true,
+  "defaultSeries": [
+    "1960",
+    "1961",
+    "1962",
+    "1963",
+    "1964",
+    "1965",
+    "1966"
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên từng thanh (quốc gia, công ty, đối tượng...)",
+      "example": "Argentina"
+    }
+  ],
+  "options": [
+    {
+      "key": "topN",
+      "label": "Số thanh hiển thị",
+      "type": "number",
+      "default": 10,
+      "min": 3,
+      "max": 20
+    },
+    {
+      "key": "speed",
+      "label": "Tốc độ (ms mỗi năm)",
+      "type": "number",
+      "default": 1200,
+      "min": 300,
+      "max": 4000
+    },
+    {
+      "key": "showTotal",
+      "label": "Hiện tổng",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "validation": [
+    "Không trùng tên danh mục",
+    "Giá trị phải là số"
+  ],
+  "interactions": [
+    "tooltip",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

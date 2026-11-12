@@ -1,0 +1,34 @@
+{
+  "palette": [
+    { "name": "Blue",   "color": "#3B82F6", "role": "Màu phụ" },
+    { "name": "Teal",   "color": "#14B8A6", "role": "Màu phụ 1" },
+    { "name": "Orange", "color": "#F59E0B", "role": "Màu phụ 2" },
+    { "name": "Purple", "color": "#8B5CF6", "role": "Màu phụ 3" },
+    { "name": "Pink",   "color": "#EC4899", "role": "Màu phụ 4" },
+    { "name": "Cyan",   "color": "#06B6D4", "role": "Màu phụ 5" },
+    { "name": "Green",  "color": "#22C55E", "role": "Màu phụ 6" },
+    { "name": "Red",    "color": "#EF4444", "role": "Màu cảnh báo" },
+    { "name": "Indigo", "color": "#6366F1", "role": "Màu phụ 7" },
+    { "name": "Slate",  "color": "#64748B", "role": "Màu trung tính" }
+  ],
+  "mainColor": { "name": "Maincolor", "start": "#412077", "end": "#9e82f0", "role": "Màu chính" },
+  "status": {
+    "positive": "#22C55E",
+    "negative": "#EF4444",
+    "warning": "#F59E0B",
+    "info": "#3B82F6",
+    "neutral": "#94A3B8"
+  },
+  "theme": {
+    "light": { "background": "#FFFFFF", "grid": "#E2E8F0", "label": "#334155", "axis": "#94A3B8" },
+    "dark":  { "background": "#0F172A", "grid": "#334155", "label": "#E2E8F0", "axis": "#94A3B8" }
+  },
+  "defaults": {
+    "theme": "light",
+    "language": "vi",
+    "tooltip": true,
+    "legendToggle": true,
+    "highlightOnHover": true,
+    "decimalPlaces": 0
+  }
+}

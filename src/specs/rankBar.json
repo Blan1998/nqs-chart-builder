@@ -1,0 +1,23 @@
+{
+  "id": "rankBar",
+  "label": "Thanh ngang xếp hạng",
+  "group": "So sánh",
+  "columns": [
+    { "key": "category", "label": "Danh mục", "type": "category", "required": true,
+      "description": "Tên từng thanh, sẽ được sắp xếp từ lớn đến nhỏ", "example": "Dallas Mavericks" },
+    { "key": "value", "label": "Giá trị", "type": "number", "required": true,
+      "description": "Giá trị của danh mục", "example": 8250 }
+  ],
+  "options": [
+    { "key": "showLabels", "label": "Nhãn dữ liệu", "type": "boolean", "default": true },
+    { "key": "startAtZero", "label": "Trục bắt đầu từ 0", "type": "boolean", "default": true },
+    { "key": "valueUnit", "label": "Đơn vị", "type": "text", "default": "" },
+    { "key": "decimalPlaces", "label": "Số chữ số thập phân", "type": "number", "default": 0, "min": 0, "max": 4 }
+  ],
+  "validation": [
+    "Không trùng tên danh mục",
+    "Giá trị phải là số"
+  ],
+  "interactions": ["tooltip", "highlight"],
+  "excelSheets": { "data": "Dữ liệu", "guide": "Hướng dẫn" }
+}
