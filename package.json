@@ -10,7 +10,7 @@
     "build": "vite build",
     "start": "npm run build:electron && electron .",
     "dist": "node scripts/bump-version.js && vite build && npm run build:electron && electron-builder",
-    "dist:mac": "vite build && npm run build:electron && electron-builder --mac --universal",
+    "dist:mac": "vite build && npm run build:electron && electron-builder --mac --x64 --arm64",
     "test":"node scripts/validate-specs.js"
   },
   "dependencies": {
