@@ -71,6 +71,7 @@
     "publish": [
       {
         "provider": "github",
+        "releaseType": "release",
         "owner": "Blan1998",
         "repo": "nqs-chart-builder"
       }
