@@ -26,7 +26,15 @@ jobs:
           if [ -n "$AI_KEY" ]; then printf '%s' "$AI_KEY" > ai-key.txt; fi
       - run: npx vite build
       - run: npm run build:electron
-      - name: Đóng gói và đẩy lên GitHub Release
+      - name: Đóng gói bản Mac
+        run: npx electron-builder --mac --x64 --arm64 --publish never
+      - name: Đưa file Mac lên GitHub Release của phiên bản này
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --x64 --arm64 --publish always
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          TAG="v$VER"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --notes "NQS Chart Builder $VER"
+          fi
+          gh release upload "$TAG" out/*.dmg out/*.zip out/*.blockmap out/latest-mac.yml --clobber
