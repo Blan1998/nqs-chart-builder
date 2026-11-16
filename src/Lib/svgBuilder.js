@@ -498,14 +498,14 @@ function runtime(DATA) {
     }
     if (S.subtitle) {
       label(S.subtitle, { x: 30, y: y, 'font-size': 15, fill: TXT || T.axis }, g);
-      y += 22;
+      y += Math.round(LS * 1.0); // khoảng cách theo cỡ chữ
     }
     var entries = O.showLegend !== false ? legendEntries() : [];
     if (entries.length) {
       var fsz = LS;
       var lineH = fsz * 1.6 + 8;
       var x = 30;
-      y += 20;
+      y += 20 + Math.round(LS * 0.6);
       entries.forEach(function (en) {
         var itemW = 22 + String(en.name).length * fsz * 0.6 + 30;
         if (x > 30 && x + itemW > W - 30) {
