@@ -921,6 +921,7 @@ function runtime(DATA) {
             height: Math.abs(py - base),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
+            'data-ci': ci,
             'data-tip': tipAll(ci, D.xs[ci]),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
@@ -942,8 +943,8 @@ function runtime(DATA) {
         }
         pts.forEach(function (p) {
           var tipRaw = tipAll(p.ci, D.xs[p.ci]);
-          markerEl(O.markerShape || 'circle', p.x, p.y, O.markerSize != null ? O.markerSize : 6, T.background, s.start, g, { 'data-g': s.name });
-          el('circle', { cx: p.x, cy: p.y, r: 10, fill: 'transparent', 'data-g': s.name, 'data-tip': tipRaw }, g);
+          markerEl(O.markerShape || 'circle', p.x, p.y, O.markerSize != null ? O.markerSize : 6, T.background, s.start, g, { 'data-g': s.name, 'data-ci': p.ci });
+          el('circle', { cx: p.x, cy: p.y, r: 10, fill: 'transparent', 'data-g': s.name, 'data-ci': p.ci, 'data-tip': tipRaw }, g);
           if (O.showLabels !== false) {
             var ptxt = fmt(p.v, dp) + (s.pct ? '%' : '');
             var fsL = LS;
@@ -1637,6 +1638,18 @@ function runtime(DATA) {
 
   // Cột (và khúc cột chồng) chỉ sáng đúng phần tử được rê vào; đường, miếng bánh... vẫn sáng theo cả nhóm
   function highlight(group, target) {
+    // Biểu đồ kết hợp: rê vào cột hoặc điểm thì sáng cả cột và điểm đánh dấu cùng mốc, phần còn lại mờ đi
+    var ciKey = target && group !== null && target.getAttribute('data-ci') !== null ? target.getAttribute('data-ci') : null;
+    if (ciKey !== null) {
+      var ck = 'ci:' + ciKey;
+      if (ck === lastHL) return;
+      lastHL = ck;
+      var allc = root.querySelectorAll('[data-g]');
+      for (var q = 0; q < allc.length; q++) {
+        allc[q].setAttribute('opacity', allc[q].getAttribute('data-ci') === ciKey ? 1 : 0.3);
+      }
+      return;
+    }
     var single = !!target && group !== null && (target.getAttribute('data-bar') !== null || (DATA.type === 'stackedBar' && target.tagName === 'rect'));
     var key = single ? target : group;
     if (key === lastHL) return;
