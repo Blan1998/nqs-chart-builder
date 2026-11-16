@@ -1,6 +1,6 @@
 {
   "name": "nqs-chart-builder",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "CÃ´ng cá»¥ váº½ biá»ƒu Ä‘á»“ SVG tÆ°Æ¡ng tÃ¡c cho NgÆ°á»i Quan SÃ¡t",
   "main": "dist-electron/main.js",
   "private": true,
@@ -11,7 +11,7 @@
     "start": "npm run build:electron && electron .",
     "dist": "node scripts/bump-version.js && vite build && npm run build:electron && electron-builder",
     "dist:mac": "vite build && npm run build:electron && electron-builder --mac --x64 --arm64",
-    "test":"node scripts/validate-specs.js"
+    "test": "node scripts/validate-specs.js"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.1.0",
