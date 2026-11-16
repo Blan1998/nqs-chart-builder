@@ -1,0 +1,71 @@
+{
+  "id": "stackedArea",
+  "label": "Vùng chồng (xu hướng cơ cấu)",
+  "group": "Xu hướng",
+  "layout": "wide",
+  "defaultSeries": [
+    "Nhóm A",
+    "Nhóm B",
+    "Nhóm C",
+    "Nhóm D",
+    "Nhóm E"
+  ],
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Mốc thời gian trên trục X, ví dụ quý hoặc năm",
+      "example": "Q1/2024"
+    }
+  ],
+  "options": [
+    {
+      "key": "percent",
+      "label": "Tỷ trọng 100%",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showPoints",
+      "label": "Hiện điểm đánh dấu",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 4
+    }
+  ],
+  "validation": [
+    "Không trùng mốc thời gian",
+    "Mỗi chuỗi phải có tên và tên không trùng nhau",
+    "Giá trị nên không âm"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

@@ -84,7 +84,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
     return { xs: seriesCols.map((c) => c.label), entities: ents, pct: seriesCols.some((c) => c.pct) };
   }
 
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar') {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea') {
     const catRows = valid.filter((r) => !isBlank(r.category));
     const xsAll = catRows.map((r) => String(r.category).trim());
     return {
@@ -1045,6 +1045,79 @@ function runtime(DATA) {
     }
   }
 
+  // Vùng chồng: các chuỗi xếp chồng từ dưới lên, mỗi chuỗi là một vùng tô màu có đường viền và điểm
+  function drawStackedArea(g, top) {
+    var x0 = 80;
+    var x1 = W - 50;
+    var y0 = top + 10;
+    var y1 = bottomY - 34;
+    var visible = D.series.filter(function (s) { return !hidden[s.name]; });
+    var n = D.xs.length;
+    var pct = !!O.percent;
+    function val(s, ci) { var v = s.values[ci]; return v !== null && v !== undefined && v > 0 ? v : 0; }
+    var totals = D.xs.map(function (_, ci) {
+      var t = 0;
+      visible.forEach(function (s) { t += val(s, ci); });
+      return t;
+    });
+    var maxTotal = Math.max.apply(null, totals.concat([0]));
+
+    if (n === 0 || visible.length === 0 || maxTotal <= 0) {
+      noData(g);
+      return;
+    }
+    var d = pct ? { lo: 0, hi: 1, step: 0.25 } : domainFor([0, maxTotal], true);
+    if (!pct) x0 = Math.max(x0, axisPad(d));
+    var span = d.hi - d.lo;
+    function mapY(v) { return y1 - (v - d.lo) / span * (y1 - y0); }
+    function mapX(ci) { return n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * ci / (n - 1); }
+
+    if (pct) {
+      [0, 0.25, 0.5, 0.75, 1].forEach(function (t) {
+        var p = mapY(t);
+        if (S.showGrid) el('line', { x1: x0, y1: p, x2: x1, y2: p, stroke: T.grid, 'stroke-dasharray': '4 4' }, g);
+        if (S.showAxes) label(Math.round(t * 100) + '%', { x: x0 - 8, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
+      });
+    } else {
+      drawAxisY(g, d, x0, x1, y0, y1, false);
+    }
+    if (S.showAxes) el('line', { x1: x0, y1: y1, x2: x1, y2: y1, stroke: T.axis }, g);
+
+    // Đường biên dưới/trên của từng chuỗi tại mỗi mốc
+    var lower = D.xs.map(function () { return 0; });
+    var layers = visible.map(function (s) {
+      var lo = lower.slice();
+      var up = D.xs.map(function (_, ci) {
+        var share = pct ? (totals[ci] > 0 ? val(s, ci) / totals[ci] : 0) : val(s, ci);
+        return lo[ci] + share;
+      });
+      lower = up;
+      return { s: s, lo: lo, up: up };
+    });
+
+    var NL = String.fromCharCode(10);
+    var pts = O.showPoints !== false;
+    layers.forEach(function (L) {
+      var top = L.up.map(function (v, ci) { return mapX(ci) + ' ' + mapY(v); });
+      var bot = L.lo.map(function (v, ci) { return mapX(ci) + ' ' + mapY(v); }).reverse();
+      var dArea = 'M' + top.join('L') + 'L' + bot.join('L') + 'Z';
+      el('path', { d: dArea, fill: L.s.start, 'fill-opacity': 0.78, stroke: 'none', 'data-g': L.s.name }, g);
+    });
+    layers.forEach(function (L) {
+      var dLine = 'M' + L.up.map(function (v, ci) { return mapX(ci) + ' ' + mapY(v); }).join('L');
+      el('path', { d: dLine, fill: 'none', stroke: L.s.start, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'data-g': L.s.name, 'pointer-events': 'none' }, g);
+      L.up.forEach(function (v, ci) {
+        var raw = val(L.s, ci);
+        var vText = pct ? fmt(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + unit;
+        if (pts) el('circle', { cx: mapX(ci), cy: mapY(v), r: 4, fill: L.s.start, 'data-g': L.s.name, 'pointer-events': 'none' }, g);
+        el('circle', { cx: mapX(ci), cy: mapY((L.lo[ci] + v) / 2), r: 12, fill: 'transparent', 'data-g': L.s.name, 'data-tip': L.s.name + NL + D.xs[ci] + NL + vText }, g);
+      });
+    });
+    D.xs.forEach(function (cat, ci) {
+      catLabel(cat, mapX(ci), y1 + 10 + LS, (x1 - x0) / Math.max(1, n - 1), { 'font-size': 13 }, g);
+    });
+  }
+
   // Điểm đánh dấu theo kiểu: tròn, vuông, thoi, tam giác, ngôi sao
   function markerEl(shape, cx, cy, r, fill, stroke, parent, extra) {
     var base = Object.assign({ fill: fill, stroke: stroke, 'stroke-width': 1.5, 'pointer-events': 'none' }, extra || {});
@@ -1492,6 +1565,7 @@ function runtime(DATA) {
     else if (DATA.type === 'barRace') drawBarRace(root, top);
     else if (DATA.type === 'lineRank') drawLineRank(root, top);
     else if (DATA.type === 'stackedBar') drawStacked(root, top);
+    else if (DATA.type === 'stackedArea') drawStackedArea(root, top);
     else if (DATA.type === 'rankBar') drawBar(root, top);
     else drawLine(root, top);
     if (S.description) label(S.description, { x: 30, y: H - 18, 'font-size': 12, fill: TXT || T.axis }, root);

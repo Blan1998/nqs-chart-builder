@@ -75,7 +75,7 @@ export function validateRows(spec, rows) {
   }
 
   // Cột cạnh nhau (bảng ngang): tên chuỗi không rỗng, không trùng; danh mục không trùng
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'barRace' || spec.id === 'lineRank') {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || spec.id === 'barRace' || spec.id === 'lineRank') {
     const names = spec.columns.slice(1).map((c) => String(c.label ?? '').trim());
     names.forEach((n, k) => {
       if (!n) add(-1, null, `Chuỗi thứ ${k + 1} chưa có tên.`);

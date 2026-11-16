@@ -6,6 +6,7 @@ export const CHART_GUIDE = {
   groupedBar: 'So sánh nhiều chuỗi giữa các danh mục, mỗi danh mục có các cột cạnh nhau.',
   combo: 'Kết hợp cột và đường, dùng khi hai chuỗi khác đơn vị hoặc khác quy mô.',
   stackedBar: 'Cơ cấu của tổng theo từng mốc, các phần cộng lại thành tổng, có thể chuyển 100%.',
+  stackedArea: 'Vùng chồng: thay đổi cơ cấu (hoặc tổng) của nhiều thành phần qua các mốc thời gian, có thể chuyển 100%.',
   rankBar: 'Xếp hạng các danh mục theo một giá trị, từ lớn đến nhỏ.',
   barRace: 'Đua thanh: thứ hạng các quốc gia/đối tượng thay đổi theo từng năm, có cờ và khu vực. Dùng khi dữ liệu có nhiều mốc thời gian và nhiều đối tượng.',
   lineRank: 'Đường xếp hạng theo năm: so sánh giá trị hoặc thứ hạng của nhiều đối tượng qua các mốc thời gian.',
