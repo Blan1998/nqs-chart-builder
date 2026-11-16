@@ -13,6 +13,12 @@ export function toNumber(v) {
 }
 
 // Trả về danh sách lỗi: { row (0 = dòng đầu, -1 = lỗi chung), key, message }
+// Khóa cột giá trị dùng để vẽ biểu đồ tròn: cột được chọn "Vẽ", mặc định cột đầu tiên (bảng cũ dùng khóa 'value')
+export function pieValueCol(spec) {
+  const cols = spec.columns.slice(1);
+  return cols.find((c) => c.draw) ?? cols[0] ?? { key: 'value' };
+}
+
 export function validateRows(spec, rows) {
   const errors = [];
   // level: 'error' chặn việc đi tiếp, 'warn' chỉ cảnh báo
@@ -75,7 +81,7 @@ export function validateRows(spec, rows) {
   }
 
   // Cột cạnh nhau (bảng ngang): tên chuỗi không rỗng, không trùng; danh mục không trùng
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || spec.id === 'barRace' || spec.id === 'lineRank') {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || spec.id === 'pie' || spec.id === 'barRace' || spec.id === 'lineRank') {
     const names = spec.columns.slice(1).map((c) => String(c.label ?? '').trim());
     names.forEach((n, k) => {
       if (!n) add(-1, null, `Chuỗi thứ ${k + 1} chưa có tên.`);
@@ -93,9 +99,10 @@ export function validateRows(spec, rows) {
   }
 
   // Pie: tổng phải lớn hơn 0
-  if (spec.id === 'pie' && rows.some((r) => !isBlank(r.value))) {
+  if (spec.id === 'pie' && rows.some((r) => !isBlank(r[pieValueCol(spec).key]))) {
+    const vk = pieValueCol(spec).key;
     const total = rows.reduce((sum, r) => {
-      const n = toNumber(r.value);
+      const n = toNumber(r[vk]);
       return Number.isNaN(n) ? sum : sum + n;
     }, 0);
     if (total <= 0) add(-1, null, 'Tổng các giá trị phải lớn hơn 0.');

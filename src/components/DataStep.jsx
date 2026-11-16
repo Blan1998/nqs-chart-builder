@@ -96,6 +96,11 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
     onSeriesChange(series.map((s) => (s.id === id ? { ...s, pct } : s)), rows);
   }
 
+  // Biểu đồ tròn nhiều cột giá trị: chọn đúng một cột để vẽ
+  function setDrawn(id) {
+    onSeriesChange(series.map((s) => ({ ...s, draw: s.id === id })), rows);
+  }
+
   function changeKind(id, kind) {
     onSeriesChange(series.map((s) => (s.id === id ? { ...s, kind } : s)), rows);
   }
@@ -353,11 +358,17 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
                           <option value="line">Đường</option>
                         </select>
                       )}
-                      {['combo', 'barRace', 'lineRank'].includes(spec.id) && (
+                      {['combo', 'barRace', 'lineRank', 'pie'].includes(spec.id) && (
                         <select value={s.pct ? 'pct' : 'num'} onChange={(e) => changePct(s.id, e.target.value === 'pct')}>
                           <option value="num">Số</option>
                           <option value="pct">%</option>
                         </select>
+                      )}
+                      {spec.id === 'pie' && series.length > 1 && (
+                        <label className="draw-pick" title="Dùng cột này để vẽ biểu đồ">
+                          <input type="radio" name="pie-draw" checked={s.draw ? true : (!series.some((x) => x.draw) && series[0].id === s.id)} onChange={() => setDrawn(s.id)} />
+                          <span>Vẽ</span>
+                        </label>
                       )}
                       <button className="row-del" title="Xóa cột" onClick={() => removeSeries(s.id)}>×</button>
                     </div>

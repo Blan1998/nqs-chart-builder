@@ -1,7 +1,7 @@
 // Sinh file SVG tự chứa: dữ liệu và cấu hình được nhúng vào, script vẽ biểu đồ và xử lý tương tác.
 import { NQS_LOGO_SVG, NQS_LOGO_RATIO } from './nqsLogo.js';
 import common from '../specs/common.json';
-import { isBlank, toNumber } from './dataUtils.js';
+import { isBlank, toNumber, pieValueCol } from './dataUtils.js';
 
 // Màu mặc định: mục đầu tiên dùng gradient tím (màu chính), các mục sau xoay vòng qua các gradient còn lại
 // start là màu phía dưới, end là màu phía trên
@@ -142,17 +142,20 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
   }
 
   const items = [];
+  const vcol = spec.id === 'pie' ? pieValueCol(spec) : { key: 'value' };
   for (const r of valid) {
     if (isBlank(r.category)) continue;
-    const n = toNumber(r.value);
+    let n = toNumber(r[vcol.key]);
     if (Number.isNaN(n)) continue;
+    // Cột chọn kiểu % : ô nhập 0.35 hiểu là 35%
+    if (vcol.pct && Math.abs(n) <= 1 && !String(r[vcol.key]).includes('%')) n *= 100;
     const label = String(r.category).trim();
     const fallback = spec.id === 'bar' ? defaultGrad(0) : defaultGrad(items.length);
     const colorKey = spec.id === 'bar' ? BAR_KEY : label;
     const p = pickBrand(brand, label, colors, colorKey, resolveColor(colors, colorKey, fallback));
     items.push({ label, value: n, start: p.start, mid: p.mid, dir: p.dir, end: p.end });
   }
-  return { items };
+  return { items, pct: !!vcol.pct };
 }
 
 // Danh sách các đối tượng có thể đổi màu ở bước 5
@@ -604,7 +607,7 @@ function runtime(DATA) {
         }
         if (O.showLabels !== false && frac > 0.04) {
           var lr = r * 0.62;
-          var txt = O.showAs === 'value' ? fmt(it.value, dpOf(it.value)) : fmt(frac * 100, 1) + '%';
+          var txt = O.showAs === 'value' ? fmt(it.value, dpOf(it.value)) + (D.pct ? '%' : '') : fmt(frac * 100, 1) + '%';
           label(txt, {
             x: cx + ox + lr * Math.cos(mid),
             y: cy + oy + lr * Math.sin(mid),

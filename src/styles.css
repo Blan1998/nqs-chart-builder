@@ -872,3 +872,5 @@ section { margin-bottom: 4px; }
 /* Tùy chọn dùng màu thương hiệu của logo (bước 5) */
 .brand-box { margin: 6px 0 16px; padding: 12px 14px; border: 1px dashed #d9d4ec; border-radius: 12px; background: #faf9ff; }
 .brand-box .hint { margin: 6px 0 0 26px; }
+
+.draw-pick { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #3b1b70; white-space: nowrap; cursor: pointer; }

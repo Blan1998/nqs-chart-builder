@@ -44,6 +44,7 @@ export function wideSpecFor(spec, series) {
         description: 'Giá trị của chuỗi này',
         kind: s.kind,
         pct: s.pct,
+        draw: s.draw,
       })),
     ],
   };

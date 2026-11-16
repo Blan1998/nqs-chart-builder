@@ -41,6 +41,7 @@ const RACE_SAMPLE = [{"name": "Argentina", "region": "Americas", "flag": "https:
 
 // Mẫu theo hàng: [danh mục, chuỗi 1, chuỗi 2, ...]
 const WIDE = {
+  pie: [['Nhóm A', 35], ['Nhóm B', 25], ['Nhóm C', 40]],
   groupedBar: [
     ['Bán hàng', 78, 65],
     ['Tài chính', 60, 65],
