@@ -112,7 +112,7 @@ export default function App() {
         </nav>
 
         <div className="sidebar-tools">
-          <button className="reset-btn" onClick={resetAll}>Làm lại từ đầu</button>
+          <button className="reset-btn" onClick={resetAll}>Reset</button>
           {message && <p className="status">{message}</p>}
         </div>
 

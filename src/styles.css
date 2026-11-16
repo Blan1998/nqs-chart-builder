@@ -721,15 +721,17 @@ section { margin-bottom: 4px; }
 .sidebar-tools button:hover { background: rgba(255, 255, 255, 0.2); }
 .sidebar-tools .reset-btn {
   padding: 12px 16px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: #3b1b70;
-  background: #fff;
-  border-color: #fff;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, #ee7224 0%, #b0423f 50%, #3b1b70 100%);
+  border: none;
+  border-radius: 14px;
   box-shadow: 0 6px 18px rgba(59, 27, 112, 0.35);
   cursor: pointer;
 }
-.sidebar-tools .reset-btn:hover { background: #ffe9d6; color: #c2410c; }
+.sidebar-tools .reset-btn:hover { filter: brightness(1.12); }
 .sidebar-tools .status { font-size: 11px; opacity: 0.9; margin: 0; word-break: break-all; }
 .sidebar-brand { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sidebar-logo { width: 100%; height: auto; border-radius: 12px; }
