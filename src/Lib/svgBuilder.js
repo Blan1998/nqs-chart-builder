@@ -458,7 +458,7 @@ function runtime(DATA) {
   }
 
   function drawHeader(g) {
-    var y = 42 + 20; // chừa lề trên để tiêu đề không dính mép
+    var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
     if (S.title) {
       // Tiêu đề dài thì xuống dòng theo bề rộng biểu đồ
       var tLines = wrapText(S.title, TSZ, true, W - 60, g);
