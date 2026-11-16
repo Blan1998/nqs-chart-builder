@@ -483,7 +483,7 @@ function runtime(DATA) {
   }
 
   function drawHeader(g) {
-    var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
+    var y = 28 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
     // Logo nằm ở 1/3 bên phải, căn phải theo mép biểu đồ, giữa theo chiều dọc với dòng tiêu đề đầu tiên
     if (S.brandLogo) {
       var lgW = Math.round(Math.min(300, W * 0.25));
