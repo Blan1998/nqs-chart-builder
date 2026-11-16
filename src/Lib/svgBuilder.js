@@ -497,7 +497,7 @@ function runtime(DATA) {
       tLines.forEach(function (ln, li) {
         label(ln, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
         // Dòng cuối: khoảng cách xuống dòng đơn vị gọn hơn khoảng cách giữa các dòng tiêu đề
-        y += li === tLines.length - 1 ? Math.round(TSZ * 0.3 + LS * 1.1) : Math.round(TSZ * 1.2);
+        y += li === tLines.length - 1 ? Math.round(TSZ * 0.3 + LS * 1.1) + 12 : Math.round(TSZ * 1.2);
       });
     }
     if (S.subtitle) {
