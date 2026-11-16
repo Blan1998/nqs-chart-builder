@@ -262,9 +262,27 @@ function runtime(DATA) {
   var TXT = DATA.settings.textColor || null;
   var LBLN = DATA.settings.lineLabelColor || TXT || DATA.theme.label;
   var INS = DATA.settings.insideColor || '#FFFFFF';
-  var TSZ = DATA.settings.titleSize || 26;
-  var LS = DATA.settings.labelSize || 14; // cỡ chữ nhãn: đúng bằng số người dùng nhập
-  var DS = DATA.settings.dataSize || 15; // cỡ chữ số liệu
+  var TSZ0 = DATA.settings.titleSize || 26;
+  var LS0 = DATA.settings.labelSize || 14; // cỡ chữ nhãn: đúng bằng số người dùng nhập
+  var DS0 = DATA.settings.dataSize || 15; // cỡ chữ số liệu
+  var TSZ = TSZ0, LS = LS0, DS = DS0;
+  var fontK = 1; // hệ số phóng chữ khi xem trên màn hình nhỏ (điện thoại)
+
+  // Biểu đồ co theo bề rộng màn hình; khi bị thu nhỏ nhiều thì phóng chữ lên cho dễ đọc. Máy tính (>= 70% kích thước gốc) giữ nguyên.
+  function applyFontScale() {
+    var svgEl = document.documentElement;
+    var rw = 0;
+    try { rw = svgEl.getBoundingClientRect().width; } catch (e) { rw = 0; }
+    var sc = rw > 0 ? rw / DATA.settings.width : 1;
+    var k = sc >= 0.7 ? 1 : Math.min(2.2, 0.7 / sc);
+    k = Math.round(k * 20) / 20;
+    var changed = k !== fontK;
+    fontK = k;
+    TSZ = Math.round(TSZ0 * k);
+    LS = Math.round(LS0 * k);
+    DS = Math.round(DS0 * k);
+    return changed;
+  }
   var S = DATA.settings;
   var O = DATA.options || {};
   var T = DATA.theme;
@@ -1454,6 +1472,7 @@ function runtime(DATA) {
   }
 
   function draw() {
+    applyFontScale();
     while (root.firstChild) root.removeChild(root.firstChild);
     lastHL = null;
     gradN = 0;
@@ -1595,6 +1614,11 @@ function runtime(DATA) {
 
   if (DATA.type === 'barRace') requestAnimationFrame(raceTick);
   draw();
+  var rzTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(rzTimer);
+    rzTimer = setTimeout(function () { var o = fontK; applyFontScale(); if (fontK !== o && DATA.type !== 'barRace') draw(); }, 150);
+  });
 }
 
 
