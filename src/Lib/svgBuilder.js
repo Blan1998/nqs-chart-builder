@@ -273,6 +273,7 @@ function runtime(DATA) {
 
   // Biểu đồ co theo bề rộng màn hình; trên điện thoại (hiển thị < 55% kích thước gốc) thì dùng cỡ chữ lớn hơn.
   function applyFontScale() {
+    if (DATA.isStatic) return false;
     var svgEl = document.documentElement;
     var rw = 0;
     try { rw = svgEl.getBoundingClientRect().width; } catch (e) { rw = 0; }
@@ -1519,6 +1520,7 @@ function runtime(DATA) {
   var introState = 0; // 0 chưa chạy, 1 đã chờ/đã chạy
   function playIntro() {
     var bars = root.querySelectorAll('[data-bar]');
+    if (DATA.isStatic) { introState = 1; return; }
     if (introState === 1 || !bars.length || !root.animate) { introState = 1; return; }
     introState = 1;
     var items = [];
@@ -1726,7 +1728,8 @@ export function renderStaticSvg(spec, settings, options, rows, colors = {}) {
   document.body.appendChild(host);
   let out = '';
   try {
-    runtime(JSON.parse(JSON.stringify(payload)));
+    // Ảnh tĩnh: không chạy hiệu ứng vào, không phóng chữ theo cỡ cửa sổ app
+    runtime(Object.assign(JSON.parse(JSON.stringify(payload)), { isStatic: true }));
     out = host.querySelector('svg').outerHTML;
   } finally {
     document.body.removeChild(host);

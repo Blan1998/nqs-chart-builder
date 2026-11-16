@@ -97,7 +97,8 @@ function previewSvg(spec) {
   }
 
   const colors = {};
-  colorTargets(target, rows).forEach((t) => { colors[t.key] = PREVIEW_GRADIENT; });
+  // Vùng chồng cần mỗi chuỗi một màu riêng, nếu không các vùng hòa vào nhau
+  if (spec.id !== 'stackedArea') colorTargets(target, rows).forEach((t) => { colors[t.key] = PREVIEW_GRADIENT; });
   return renderStaticSvg(target, settings, defaults, rows, colors);
 }
 
