@@ -217,7 +217,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       insideColor: settings.insideColor || null,
       titleSize: settings.titleSize || 35,
       labelSize: settings.labelSize || 16,
-      dataSize: settings.dataSize || 22,
+      dataSize: settings.dataSize || 18,
       lineLabelColor: settings.lineLabelColor || null,
     },
     options,
@@ -264,7 +264,7 @@ function runtime(DATA) {
   var INS = DATA.settings.insideColor || '#FFFFFF';
   var TSZ0 = DATA.settings.titleSize || 35;
   var LS0 = DATA.settings.labelSize || 16; // cỡ chữ nhãn: đúng bằng số người dùng nhập
-  var DS0 = DATA.settings.dataSize || 22; // cỡ chữ số liệu
+  var DS0 = DATA.settings.dataSize || 18; // cỡ chữ số liệu
   var TSZ = TSZ0, LS = LS0, DS = DS0;
   var fontK = 1; // hệ số phóng chữ khi xem trên màn hình nhỏ (điện thoại)
 
@@ -274,14 +274,14 @@ function runtime(DATA) {
     var rw = 0;
     try { rw = svgEl.getBoundingClientRect().width; } catch (e) { rw = 0; }
     var sc = rw > 0 ? rw / DATA.settings.width : 1;
-    // Điện thoại: tiêu đề 35 -> 45, nhãn 16 -> 22, số liệu 22 -> 28 (tỉ lệ theo cỡ người dùng chọn)
+    // Điện thoại: tiêu đề 35 -> 45, nhãn 16 -> 22, số liệu 18 -> 28 (tỉ lệ theo cỡ người dùng chọn)
     var mobile = sc < 0.55;
     var k = mobile ? 1 : 0;
     var changed = k !== fontK;
     fontK = k;
     TSZ = mobile ? Math.round(TSZ0 * 45 / 35) : TSZ0;
     LS = mobile ? Math.round(LS0 * 22 / 16) : LS0;
-    DS = mobile ? Math.round(DS0 * 28 / 22) : DS0;
+    DS = mobile ? Math.round(DS0 * 28 / 18) : DS0;
     return changed;
   }
   var S = DATA.settings;

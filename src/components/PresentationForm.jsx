@@ -1,5 +1,7 @@
 // Cấu hình trình bày chung cho mọi loại biểu đồ (bước 3)
 
+export const TITLE_MAX = 60;
+
 export const DEFAULT_DESCRIPTION = 'Dữ liệu: Người Quan Sát';
 
 export const DEFAULT_SETTINGS = {
@@ -21,7 +23,7 @@ export const DEFAULT_SETTINGS = {
   bgColor: null,
   titleSize: 35,
   labelSize: 16,
-  dataSize: 22,
+  dataSize: 18,
   lineLabelColor: null,
   useLogo: false,
   logoAliases: {},
@@ -76,6 +78,9 @@ export default function PresentationForm({ spec, settings, onChange }) {
         <div className="options-grid">
           <Field label="Tiêu đề">
             <input type="text" value={settings.title} onChange={(e) => set('title', e.target.value)} />
+            {(settings.title || '').length > TITLE_MAX && (
+              <span className="field-error">Tiêu đề dài {(settings.title || '').length} ký tự, nên giữ tối đa {TITLE_MAX} ký tự.</span>
+            )}
           </Field>
           <Field label="Phụ đề">
             <input type="text" value={settings.subtitle} onChange={(e) => set('subtitle', e.target.value)} />

@@ -247,7 +247,7 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
           onSize={(v) => onSettingsChange({ ...settings, titleSize: v })} />
         <SizeField label="Nhãn trục" value={settings.labelSize} fallback={16}
           onSize={(v) => onSettingsChange({ ...settings, labelSize: v })} />
-        <SizeField label="Số liệu" value={settings.dataSize} fallback={22}
+        <SizeField label="Số liệu" value={settings.dataSize} fallback={18}
           onSize={(v) => onSettingsChange({ ...settings, dataSize: v })} />
       </div>
 
