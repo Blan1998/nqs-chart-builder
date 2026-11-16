@@ -1538,13 +1538,16 @@ function runtime(DATA) {
     tip.setAttribute('visibility', 'hidden');
   }
 
-  function highlight(group) {
-    if (group === lastHL) return;
-    lastHL = group;
+  // Cột (và khúc cột chồng) chỉ sáng đúng phần tử được rê vào; đường, miếng bánh... vẫn sáng theo cả nhóm
+  function highlight(group, target) {
+    var single = !!target && group !== null && (target.getAttribute('data-bar') !== null || (DATA.type === 'stackedBar' && target.tagName === 'rect'));
+    var key = single ? target : group;
+    if (key === lastHL) return;
+    lastHL = key;
     var all = root.querySelectorAll('[data-g]');
     for (var k = 0; k < all.length; k++) {
-      var g2 = all[k].getAttribute('data-g');
-      all[k].setAttribute('opacity', group === null || g2 === group ? 1 : 0.3);
+      var on = group === null || (single ? all[k] === target : all[k].getAttribute('data-g') === group);
+      all[k].setAttribute('opacity', on ? 1 : 0.3);
     }
   }
 
@@ -1567,7 +1570,7 @@ function runtime(DATA) {
     var raw = e.target.getAttribute ? e.target.getAttribute('data-tip') : null;
     if (raw && IX.tooltip !== false) showTip(e, raw);
     else hideTip();
-    if (IX.highlight !== false) highlight(raw ? e.target.getAttribute('data-g') : null);
+    if (IX.highlight !== false) highlight(raw ? e.target.getAttribute('data-g') : null, e.target);
   });
 
   svgRoot.addEventListener('mouseleave', function () {
