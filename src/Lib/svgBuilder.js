@@ -466,7 +466,7 @@ function runtime(DATA) {
     if (S.brandLogo) {
       var lgW = Math.round(Math.min(240, W * 0.22));
       var lgH = Math.round(lgW / S.brandLogoRatio);
-      var lgY = Math.max(10, Math.round(y - TSZ * 0.35 - lgH / 2));
+      var lgY = Math.max(10, Math.round(y - TSZ * 0.35 - lgH / 2) + 12);
       el('image', { href: S.brandLogo, x: W - 30 - lgW, y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMaxYMid meet' }, g);
     }
     if (S.title) {
