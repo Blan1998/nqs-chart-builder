@@ -215,9 +215,9 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       titleColor: settings.titleColor || null,
       textColor: settings.textColor || null,
       insideColor: settings.insideColor || null,
-      titleSize: settings.titleSize || 26,
-      labelSize: settings.labelSize || 14,
-      dataSize: settings.dataSize || 15,
+      titleSize: settings.titleSize || 35,
+      labelSize: settings.labelSize || 16,
+      dataSize: settings.dataSize || 22,
       lineLabelColor: settings.lineLabelColor || null,
     },
     options,
@@ -262,25 +262,26 @@ function runtime(DATA) {
   var TXT = DATA.settings.textColor || null;
   var LBLN = DATA.settings.lineLabelColor || TXT || DATA.theme.label;
   var INS = DATA.settings.insideColor || '#FFFFFF';
-  var TSZ0 = DATA.settings.titleSize || 26;
-  var LS0 = DATA.settings.labelSize || 14; // cỡ chữ nhãn: đúng bằng số người dùng nhập
-  var DS0 = DATA.settings.dataSize || 15; // cỡ chữ số liệu
+  var TSZ0 = DATA.settings.titleSize || 35;
+  var LS0 = DATA.settings.labelSize || 16; // cỡ chữ nhãn: đúng bằng số người dùng nhập
+  var DS0 = DATA.settings.dataSize || 22; // cỡ chữ số liệu
   var TSZ = TSZ0, LS = LS0, DS = DS0;
   var fontK = 1; // hệ số phóng chữ khi xem trên màn hình nhỏ (điện thoại)
 
-  // Biểu đồ co theo bề rộng màn hình; khi bị thu nhỏ nhiều thì phóng chữ lên cho dễ đọc. Máy tính (>= 70% kích thước gốc) giữ nguyên.
+  // Biểu đồ co theo bề rộng màn hình; trên điện thoại (hiển thị < 55% kích thước gốc) thì dùng cỡ chữ lớn hơn.
   function applyFontScale() {
     var svgEl = document.documentElement;
     var rw = 0;
     try { rw = svgEl.getBoundingClientRect().width; } catch (e) { rw = 0; }
     var sc = rw > 0 ? rw / DATA.settings.width : 1;
-    var k = sc >= 0.7 ? 1 : Math.min(2.2, 0.7 / sc);
-    k = Math.round(k * 20) / 20;
+    // Điện thoại: tiêu đề 35 -> 45, nhãn 16 -> 22, số liệu 22 -> 28 (tỉ lệ theo cỡ người dùng chọn)
+    var mobile = sc < 0.55;
+    var k = mobile ? 1 : 0;
     var changed = k !== fontK;
     fontK = k;
-    TSZ = Math.round(TSZ0 * k);
-    LS = Math.round(LS0 * k);
-    DS = Math.round(DS0 * k);
+    TSZ = mobile ? Math.round(TSZ0 * 45 / 35) : TSZ0;
+    LS = mobile ? Math.round(LS0 * 22 / 16) : LS0;
+    DS = mobile ? Math.round(DS0 * 28 / 22) : DS0;
     return changed;
   }
   var S = DATA.settings;

@@ -243,11 +243,11 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
 
       <h3 className="section-title">Cỡ chữ</h3>
       <div className="size-row">
-        <SizeField label="Tiêu đề" value={settings.titleSize} fallback={26}
+        <SizeField label="Tiêu đề" value={settings.titleSize} fallback={35}
           onSize={(v) => onSettingsChange({ ...settings, titleSize: v })} />
-        <SizeField label="Nhãn trục" value={settings.labelSize} fallback={14}
+        <SizeField label="Nhãn trục" value={settings.labelSize} fallback={16}
           onSize={(v) => onSettingsChange({ ...settings, labelSize: v })} />
-        <SizeField label="Số liệu" value={settings.dataSize} fallback={15}
+        <SizeField label="Số liệu" value={settings.dataSize} fallback={22}
           onSize={(v) => onSettingsChange({ ...settings, dataSize: v })} />
       </div>
 
