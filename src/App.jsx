@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CHART_SPECS } from './specs/index.js';
 import OptionsForm from './components/OptionsForm.jsx';
 import PresentationForm, { DEFAULT_SETTINGS } from './components/PresentationForm.jsx';
@@ -8,6 +8,7 @@ import logoImg from './assets/logo.svg';
 import SvgStep from './components/SvgStep.jsx';
 import { validateRows } from './lib/dataUtils.js';
 import { blankSeries, wideSpecFor } from './lib/wide.js';
+import { setConfirmHandler, askConfirm } from './lib/confirm.js';
 
 const STEPS = [
   { id: 1, label: 'Chọn loại biểu đồ' },
@@ -32,6 +33,18 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [sideW, setSideW] = useState(280);
   const [resetKey, setResetKey] = useState(0);
+  const [confirmBox, setConfirmBox] = useState(null); // { message, resolve }
+
+  // Hộp xác nhận dùng chung cho cả app
+  useEffect(() => {
+    setConfirmHandler((message) => new Promise((resolve) => setConfirmBox({ message, resolve })));
+    return () => setConfirmHandler(null);
+  }, []);
+
+  function answerConfirm(ok) {
+    if (confirmBox) confirmBox.resolve(ok);
+    setConfirmBox(null);
+  }
 
   // Kéo mép phải của menu để đổi độ rộng; khi menu hẹp, phần nội dung rộng ra
   function startResize(e) {
@@ -79,8 +92,8 @@ export default function App() {
   }
 
   // Làm lại từ đầu: xóa toàn bộ lựa chọn, dữ liệu, màu và thiết lập, quay về bước 1
-  function resetAll() {
-    if (!window.confirm('Làm lại từ đầu? Toàn bộ lựa chọn, dữ liệu và thiết lập hiện tại sẽ bị xóa (file đã lưu không bị ảnh hưởng).')) return;
+  async function resetAll() {
+    if (!(await askConfirm('Làm lại từ đầu? Toàn bộ lựa chọn, dữ liệu và thiết lập hiện tại sẽ bị xóa.'))) return;
     setChartId(null);
     setOptionsByChart({});
     setDataByChart({});
@@ -204,6 +217,18 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {confirmBox && (
+        <div className="confirm-overlay" onMouseDown={() => answerConfirm(false)}>
+          <div className="confirm-box" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+            <p>{confirmBox.message}</p>
+            <div className="confirm-actions">
+              <button onClick={() => answerConfirm(false)}>Hủy</button>
+              <button className="confirm-ok" autoFocus onClick={() => answerConfirm(true)}>Đồng ý</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

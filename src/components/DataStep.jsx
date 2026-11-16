@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { validateRows } from '../lib/dataUtils.js';
 import { CHART_GUIDE } from '../lib/chartGuide.js';
 import { newSeriesId } from '../lib/wide.js';
+import { askConfirm } from '../lib/confirm.js';
 
 // Các loại nhiều chuỗi cho chọn từng chuỗi là Cột hoặc Đường
 const KIND_CHARTS = ['groupedBar', 'combo', 'stackedBar'];
@@ -28,7 +29,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
   }
 
   // Bỏ mọi dấu chấm và dấu phẩy trong các cột số (không đụng tên danh mục, khu vực)
-  function stripSeparators() {
+  async function stripSeparators() {
     const numericKeys = spec.columns.filter((c) => c.type === 'number').map((c) => c.key);
     let changed = 0;
     const next = rows.map((r) => {
@@ -46,7 +47,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
       setMessage('Không có dấu . hoặc , nào trong các cột số.');
       return;
     }
-    if (!window.confirm(`Bỏ ${changed} dấu . và , trong các cột số? Thao tác này không hoàn tác được.`)) return;
+    if (!(await askConfirm(`Bỏ ${changed} dấu . và , trong các cột số? Thao tác này không hoàn tác được.`))) return;
     onRowsChange(next);
     setMessage(`Đã bỏ dấu ở ${changed} ô.`);
   }
@@ -82,8 +83,8 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
     }
   }
 
-  function clearAll() {
-    if (rows.length && window.confirm('Xóa toàn bộ dữ liệu của loại biểu đồ này?')) {
+  async function clearAll() {
+    if (rows.length && (await askConfirm('Xóa toàn bộ dữ liệu của loại biểu đồ này?'))) {
       onRowsChange([]);
     }
   }
@@ -109,9 +110,9 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
     onSeriesChange([...series, { id: newSeriesId(), name: `Chuỗi ${series.length + 1}` }], rows);
   }
 
-  function removeSeries(id) {
+  async function removeSeries(id) {
     const hasValues = rows.some((r) => r[id] !== undefined && String(r[id]).trim() !== '');
-    if (hasValues && !window.confirm('Xóa cột này và toàn bộ giá trị trong cột?')) return;
+    if (hasValues && !(await askConfirm('Xóa cột này và toàn bộ giá trị trong cột?'))) return;
     const nextRows = rows.map((r) => {
       const copy = { ...r };
       delete copy[id];
@@ -218,7 +219,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
       setMessage('Chức năng này chỉ hoạt động trong app desktop.');
       return;
     }
-    if (rows.length && !window.confirm('Nhập file sẽ thay thế toàn bộ cột và dữ liệu hiện tại. Tiếp tục?')) return;
+    if (rows.length && !(await askConfirm('Nhập file sẽ thay thế toàn bộ cột và dữ liệu hiện tại. Tiếp tục?'))) return;
     setBusy(true);
     setMessage('Đang phân tích file Excel...');
     try {
@@ -289,7 +290,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
       setMessage('Chức năng này chỉ hoạt động trong app desktop.');
       return;
     }
-    if (rows.length && !window.confirm('Nhập file sẽ thay thế dữ liệu hiện tại. Tiếp tục?')) return;
+    if (rows.length && !(await askConfirm('Nhập file sẽ thay thế dữ liệu hiện tại. Tiếp tục?'))) return;
     setBusy(true);
     setMessage('');
     try {
