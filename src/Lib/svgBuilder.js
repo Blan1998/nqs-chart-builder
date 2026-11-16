@@ -84,8 +84,14 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
     return { xs: seriesCols.map((c) => c.label), entities: ents, pct: seriesCols.some((c) => c.pct) };
   }
 
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series'))) {
-    const catRows = valid.filter((r) => !isBlank(r.category));
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series')) || (spec.id === 'rankBar' && spec.columns.length > 2)) {
+    let catRows = valid.filter((r) => !isBlank(r.category));
+    // Thanh xếp hạng nhiều cột: xếp danh mục từ lớn đến nhỏ theo cột đầu tiên
+    if (spec.id === 'rankBar') {
+      const k0 = spec.columns[1].key;
+      const num = (r) => { const n = toNumber(r[k0]); return Number.isNaN(n) ? -Infinity : n; };
+      catRows = catRows.slice().sort((a, b) => num(b) - num(a));
+    }
     const xsAll = catRows.map((r) => String(r.category).trim());
     return {
       xs: xsAll,
@@ -161,7 +167,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
 // Danh sách các đối tượng có thể đổi màu ở bước 5
 export function colorTargets(spec, rows) {
   const data = prepareData(spec, rows, {});
-  if (spec.id === 'pie' || spec.id === 'rankBar') {
+  if ((spec.id === 'pie' || spec.id === 'rankBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
   }
   if (spec.id === 'bar') {
@@ -201,7 +207,9 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
   const theme = themeOf(settings);
   // Cột cạnh nhau / Cột chồng có chuỗi chọn "Đường" thì vẽ bằng bộ vẽ Kết hợp (cột + đường)
   const hasLine = Array.isArray(data.series) && data.series.some((s) => s.kind === 'line');
-  const drawType = (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
+  // Thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau theo chiều ngang
+  const rankMulti = spec.id === 'rankBar' && Array.isArray(data.series);
+  const drawType = rankMulti ? 'groupedBar' : (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
   const payload = {
     type: drawType,
     settings: {
@@ -223,7 +231,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       dataSize: settings.dataSize || 18,
       lineLabelColor: settings.lineLabelColor || null,
     },
-    options,
+    options: rankMulti ? { ...options, orientation: 'horizontal', showLegend: true, labelInside: false } : options,
     theme,
     data,
     logos: settings.useLogo ? logos : {},
