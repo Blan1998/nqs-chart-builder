@@ -77,7 +77,7 @@ export default function PresentationForm({ spec, settings, onChange }) {
         <h3>Nội dung</h3>
         <div className="options-grid">
           <Field label="Tiêu đề">
-            <input type="text" value={settings.title} onChange={(e) => set('title', e.target.value)} />
+            <input type="text" maxLength={TITLE_MAX} value={settings.title} onChange={(e) => set('title', e.target.value.slice(0, TITLE_MAX))} />
             {(settings.title || '').length > TITLE_MAX && (
               <span className="field-error">Tiêu đề dài {(settings.title || '').length} ký tự, nên giữ tối đa {TITLE_MAX} ký tự.</span>
             )}
