@@ -260,8 +260,8 @@ function runtime(DATA) {
   var LBLN = DATA.settings.lineLabelColor || TXT || DATA.theme.label;
   var INS = DATA.settings.insideColor || '#FFFFFF';
   var TSZ = DATA.settings.titleSize || 26;
-  var LSZ = (DATA.settings.labelSize || 14) / 12;
-  var DSZ = (DATA.settings.dataSize || 15) / 12;
+  var LS = DATA.settings.labelSize || 14; // cỡ chữ nhãn: đúng bằng số người dùng nhập
+  var DS = DATA.settings.dataSize || 15; // cỡ chữ số liệu
   var S = DATA.settings;
   var O = DATA.options || {};
   var T = DATA.theme;
@@ -295,12 +295,30 @@ function runtime(DATA) {
     return n;
   }
 
+  // Cột chỉ bo góc ở đầu cột (phía giá trị), chân cột vuông
+  function barEl(a, vertical, positive, parent) {
+    var x = a.x, y = a.y, w = a.width, h = a.height;
+    var r = Math.max(0, Math.min(6, w / 2, h));
+    var d;
+    if (vertical) {
+      d = positive
+        ? 'M' + x + ' ' + (y + h) + 'V' + (y + r) + 'Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + y + ' ' + (x + w) + ' ' + (y + r) + 'V' + (y + h) + 'Z'
+        : 'M' + x + ' ' + y + 'V' + (y + h - r) + 'Q' + x + ' ' + (y + h) + ' ' + (x + r) + ' ' + (y + h) + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + (y + h) + ' ' + (x + w) + ' ' + (y + h - r) + 'V' + y + 'Z';
+    } else {
+      d = positive
+        ? 'M' + x + ' ' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + y + ' ' + (x + w) + ' ' + (y + r) + 'V' + (y + h - r) + 'Q' + (x + w) + ' ' + (y + h) + ' ' + (x + w - r) + ' ' + (y + h) + 'H' + x + 'Z'
+        : 'M' + (x + w) + ' ' + y + 'H' + (x + r) + 'Q' + x + ' ' + y + ' ' + x + ' ' + (y + r) + 'V' + (y + h - r) + 'Q' + x + ' ' + (y + h) + ' ' + (x + r) + ' ' + (y + h) + 'H' + (x + w) + 'Z';
+    }
+    var attrs = { d: d, 'data-bar': vertical ? 'v' : 'h', 'data-pos': positive ? 1 : 0 };
+    for (var k in a) if (k !== 'x' && k !== 'y' && k !== 'width' && k !== 'height' && k !== 'rx') attrs[k] = a[k];
+    return el('path', attrs, parent);
+  }
+
   function label(str, attrs, parent) {
     var a = attrs;
     if (a && a['font-size'] !== undefined && !a['data-raw']) {
       var isNum = /\d/.test(String(str)) && /^[\s\d.,%+\-−–()]+$/.test(String(str));
-      var mult = (a['data-inside'] || isNum) ? DSZ : LSZ;
-      a = Object.assign({}, a, { 'font-size': Math.round(a['font-size'] * mult * 10) / 10 });
+      a = Object.assign({}, a, { 'font-size': (a['data-inside'] || isNum) ? DS : LS });
     }
     var t = el('text', Object.assign({ 'font-family': FONT, fill: TXT || T.label }, a), parent);
     t.textContent = str;
@@ -351,7 +369,7 @@ function runtime(DATA) {
       var len = fmt(t, decOf(d.step)).length;
       if (len > longest) longest = len;
     });
-    return Math.max(80, Math.ceil(longest * 12 * DSZ * 0.6 + 20));
+    return Math.max(80, Math.ceil(longest * DS * 0.6 + 20));
   }
 
   function niceStep(raw) {
@@ -417,11 +435,37 @@ function runtime(DATA) {
     return D.series.map(function (s) { return { name: s.name, color: paint(s.legendObj || s) }; });
   }
 
+  function wrapText(str, size, bold, maxW, parent) {
+    var probe = el('text', { 'font-family': FONT, 'font-size': size, 'font-weight': bold ? 'bold' : 'normal', visibility: 'hidden' }, parent);
+    function width(t) {
+      probe.textContent = t;
+      var w = 0;
+      try { w = probe.getComputedTextLength(); } catch (e) { w = 0; }
+      return w > 0 ? w : t.length * size * (bold ? 0.6 : 0.55);
+    }
+    var out = [];
+    String(str).split(String.fromCharCode(10)).forEach(function (para) {
+      var words = para.split(/\s+/).filter(Boolean);
+      var cur = '';
+      words.forEach(function (w) {
+        var test = cur ? cur + ' ' + w : w;
+        if (cur && width(test) > maxW) { out.push(cur); cur = w; } else cur = test;
+      });
+      out.push(cur);
+    });
+    parent.removeChild(probe);
+    return out.length ? out : [''];
+  }
+
   function drawHeader(g) {
     var y = 42 + 20; // chừa lề trên để tiêu đề không dính mép
     if (S.title) {
-      label(S.title, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
-      y += Math.round(TSZ * 1.2) + 4;
+      // Tiêu đề dài thì xuống dòng theo bề rộng biểu đồ
+      var tLines = wrapText(S.title, TSZ, true, W - 60, g);
+      tLines.forEach(function (ln, li) {
+        label(ln, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
+        y += Math.round(TSZ * 1.2) + (li === tLines.length - 1 ? 4 : 0);
+      });
     }
     if (S.subtitle) {
       label(S.subtitle, { x: 30, y: y, 'font-size': 15, fill: TXT || T.axis }, g);
@@ -429,7 +473,7 @@ function runtime(DATA) {
     }
     var entries = O.showLegend !== false ? legendEntries() : [];
     if (entries.length) {
-      var fsz = 14 * LSZ;
+      var fsz = LS;
       var lineH = fsz * 1.6 + 8;
       var x = 30;
       y += 20;
@@ -589,7 +633,7 @@ function runtime(DATA) {
       if (horizontal) {
         var c0 = y0 + band * i + (band - bw) / 2;
         var px = mapV(it.value);
-        el('rect', { x: Math.min(base, px), y: c0, width: Math.abs(px - base), height: bw, rx: 6, fill: paint(it), 'data-g': it.label, 'data-tip': tipRaw }, g);
+        barEl({ x: Math.min(base, px), y: c0, width: Math.abs(px - base), height: bw, fill: paint(it), 'data-g': it.label, 'data-tip': tipRaw }, false, it.value >= 0, g);
         var lgH = logoOf(it.label);
         if (lgH) {
           var lhH = Math.max(20, Math.min(bw, 40));
@@ -607,8 +651,8 @@ function runtime(DATA) {
       } else {
         var cx0 = x0 + band * i + (band - bw) / 2;
         var py = mapV(it.value);
-        el('rect', { x: cx0, y: Math.min(base, py), width: bw, height: Math.abs(py - base), rx: 6, fill: paint(it), 'data-g': it.label, 'data-tip': tipRaw }, g);
-        catLabel(it.label, cx0 + bw / 2, y1 + 20, band, { 'font-size': 13 }, g);
+        barEl({ x: cx0, y: Math.min(base, py), width: bw, height: Math.abs(py - base), fill: paint(it), 'data-g': it.label, 'data-tip': tipRaw }, true, it.value >= 0, g);
+        catLabel(it.label, cx0 + bw / 2, y1 + 10 + LS, band, { 'font-size': 13 }, g);
         if (show) {
           label(fmt(it.value, dp) + unit, {
             x: cx0 + bw / 2,
@@ -630,7 +674,7 @@ function runtime(DATA) {
     var maxCat = 0;
     D.xs.forEach(function (c) { if (String(c).length > maxCat) maxCat = String(c).length; });
     // Cột ngang: chừa bên trái đủ chỗ cho tên danh mục hoặc logo (logo rộng tới 110)
-    var x0 = horizontal ? Math.max(140, Math.min(300, maxCat * 13 * LSZ * 0.6 + 24)) : 80;
+    var x0 = horizontal ? Math.max(140, Math.min(300, maxCat * LS * 0.6 + 24)) : 80;
     var x1 = horizontal ? W - 80 : W - 30 - legendW;
     var y0 = top;
     var y1 = bottomY - 34;
@@ -662,16 +706,15 @@ function runtime(DATA) {
           if (v === null || v === undefined) return;
           var px = mapX(v);
           var by = gy + si * bhH;
-          el('rect', {
+          barEl({
             x: Math.min(baseX, px),
             y: by + 2,
             width: Math.max(1, Math.abs(px - baseX)),
             height: Math.max(1, bhH - 4),
-            rx: 6,
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
             'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + unit,
-          }, g);
+          }, false, v >= 0, g);
           if (O.showLabels !== false) {
             var inside = !!O.labelInside;
             var onRight = v >= 0 ? !inside : inside;
@@ -715,16 +758,15 @@ function runtime(DATA) {
           if (v === null || v === undefined) return;
           var py = mapY(v);
           var bx = gx + si * bw;
-          el('rect', {
+          barEl({
             x: bx + 2,
             y: Math.min(base, py),
             width: Math.max(1, bw - 4),
             height: Math.abs(py - base),
-            rx: 6,
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
             'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + unit,
-          }, g);
+          }, true, v >= 0, g);
           if (O.showLabels !== false) {
             label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
@@ -749,9 +791,9 @@ function runtime(DATA) {
     var y0 = top + 20;
     var y1 = bottomY - 34;
     // Nhãn trục X: nếu có nhãn rộng hơn khoảng cách giữa các mốc thì dựng đứng cả hàng, chừa thêm chỗ bên dưới
-    var xFs = 13;
+    var xFs = LS;
     var xLongest = D.xs.reduce(function (m, c) { return Math.max(m, String(c).length); }, 0);
-    var xEst = xLongest * xFs * LSZ * 0.62;
+    var xEst = xLongest * xFs * 0.62;
     var rotateX = false;
     if (D.xs.length > 0) {
       var bandGuess = (W - 160) / D.xs.length;
@@ -816,18 +858,17 @@ function runtime(DATA) {
           var py = mapL(v);
           if (v >= 0 && (barTopAt[ci] === undefined || py < barTopAt[ci])) barTopAt[ci] = py;
           var bx = gx + si * bw;
-          el('rect', {
+          barEl({
             x: bx + 2,
             y: Math.min(base, py),
             width: Math.max(1, bw - 4),
             height: Math.abs(py - base),
-            rx: 6,
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
             'data-tip': s.name + '\n' + D.xs[ci] + '\n' + fmt(v, dp) + unit,
-          }, g);
+          }, true, v >= 0, g);
           if (O.showLabels !== false) {
-            CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 11 * LSZ));
+            CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, DS));
             label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 'bold', fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
         });
@@ -849,7 +890,7 @@ function runtime(DATA) {
           el('circle', { cx: p.x, cy: p.y, r: 10, fill: 'transparent', 'data-g': s.name, 'data-tip': tipRaw }, g);
           if (O.showLabels !== false) {
             var ptxt = fmt(p.v, dp) + (s.pct ? '%' : '');
-            var fsL = 12 * LSZ;
+            var fsL = LS;
             var ly = p.y - 12;
             var lb = boxOf(ptxt, p.x, ly, fsL);
             while (overlapsAny(CB, lb) && ly > top + 4) {
@@ -868,10 +909,10 @@ function runtime(DATA) {
       D.xs.forEach(function (cat, ci) {
         var cx = x0 + band * (ci + 0.5);
         if (rotateX && !logoOf(cat)) {
-          var ty = y1 + 20;
+          var ty = y1 + 10 + LS;
           label(cat, { x: cx, y: ty, 'text-anchor': 'end', 'font-size': xFs, transform: 'rotate(-35 ' + cx + ' ' + ty + ')' }, g);
         } else {
-          catLabel(cat, cx, y1 + 20, band, { 'font-size': xFs }, g);
+          catLabel(cat, cx, y1 + 10 + LS, band, { 'font-size': xFs }, g);
         }
       });
     }
@@ -1035,7 +1076,7 @@ function runtime(DATA) {
       return null;
     }
     const fs = (attrs && attrs['font-size']) || 13;
-    const est = String(str).length * fs * LSZ * 0.62;
+    const est = String(str).length * LS * 0.62;
     if (est > band * 0.95) {
       return label(str, Object.assign({}, attrs, { x: x, y: y, 'text-anchor': 'end', transform: 'rotate(-35 ' + x + ' ' + y + ')' }), parent);
     }
@@ -1364,6 +1405,44 @@ function runtime(DATA) {
     requestAnimationFrame(raceTick);
   }
 
+  // Hiệu ứng vào: cột mọc từ chân cột lên và mờ hiện dần khi biểu đồ vào vùng nhìn thấy (chỉ chạy lần đầu)
+  var introState = 0; // 0 chưa chạy, 1 đã chờ/đã chạy
+  function playIntro() {
+    var bars = root.querySelectorAll('[data-bar]');
+    if (introState === 1 || !bars.length || !root.animate) { introState = 1; return; }
+    introState = 1;
+    var items = [];
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i];
+      var vert = b.getAttribute('data-bar') === 'v';
+      var pos = b.getAttribute('data-pos') === '1';
+      var origin = vert ? (pos ? '50% 100%' : '50% 0%') : (pos ? '0% 50%' : '100% 50%');
+      b.style.transformBox = 'fill-box';
+      b.style.transformOrigin = origin;
+      b.style.opacity = '0';
+      items.push({ el: b, from: vert ? 'scale(1,0)' : 'scale(0,1)' });
+    }
+    var started = false;
+    function go() {
+      if (started) return;
+      started = true;
+      items.forEach(function (it, k) {
+        var a = it.el.animate(
+          [{ transform: it.from, opacity: 0 }, { transform: 'scale(1,1)', opacity: 1 }],
+          { duration: 800, delay: Math.min(k, 20) * 40, easing: 'cubic-bezier(0.22,1,0.36,1)', fill: 'both' }
+        );
+        a.onfinish = function () { it.el.style.opacity = ''; it.el.style.transformBox = ''; it.el.style.transformOrigin = ''; try { a.cancel(); } catch (e) {} };
+      });
+    }
+    if (typeof IntersectionObserver === 'function') {
+      var io = new IntersectionObserver(function (es) {
+        if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); go(); }
+      }, { threshold: 0.25 });
+      io.observe(root);
+      setTimeout(function () { if (!started) { io.disconnect(); go(); } }, 4000);
+    } else go();
+  }
+
   function draw() {
     while (root.firstChild) root.removeChild(root.firstChild);
     lastHL = null;
@@ -1381,6 +1460,7 @@ function runtime(DATA) {
     else if (DATA.type === 'rankBar') drawBar(root, top);
     else drawLine(root, top);
     if (S.description) label(S.description, { x: 30, y: H - 18, 'font-size': 12, fill: TXT || T.axis }, root);
+    playIntro();
     if (zoomOn) label('Cuộn chuột để zoom, kéo để di chuyển, nhấp đúp để về mặc định', { x: W - 30, y: H - 18, 'text-anchor': 'end', 'font-size': 11, fill: TXT || T.axis }, root);
   }
 
