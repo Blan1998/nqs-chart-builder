@@ -1,4 +1,5 @@
 // Sinh file SVG tự chứa: dữ liệu và cấu hình được nhúng vào, script vẽ biểu đồ và xử lý tương tác.
+import { NQS_LOGO_SVG, NQS_LOGO_RATIO } from './nqsLogo.js';
 import common from '../specs/common.json';
 import { isBlank, toNumber } from './dataUtils.js';
 
@@ -208,6 +209,8 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       description: settings.description ?? DEFAULT_DESCRIPTION,
       showAxes: settings.showAxes !== false,
       showGrid: settings.showGrid !== false,
+      brandLogo: settings.showBrandLogo === false ? null : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(NQS_LOGO_SVG),
+      brandLogoRatio: NQS_LOGO_RATIO,
       interactions: settings.interactions || {},
       titleColor: settings.titleColor || null,
       textColor: settings.textColor || null,
@@ -458,6 +461,11 @@ function runtime(DATA) {
   }
 
   function drawHeader(g) {
+    // Logo ở 1/3 bên phải phía trên, căn phải theo lề
+    if (S.brandLogo) {
+      var lgW = Math.round(Math.min(240, W * 0.22));
+      el('image', { href: S.brandLogo, x: W - 30 - lgW, y: 30, width: lgW, height: Math.round(lgW / S.brandLogoRatio), preserveAspectRatio: 'xMaxYMin meet' }, g);
+    }
     var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
     if (S.title) {
       // Tiêu đề căn trái, rộng tối đa khoảng 2/3 biểu đồ, dài hơn thì xuống dòng

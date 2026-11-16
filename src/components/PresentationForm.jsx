@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS = {
   height: 675,
   showAxes: true,
   showGrid: true,
+  showBrandLogo: true,
   interactions: { tooltip: true, highlight: true, legendToggle: true, zoomPan: false },
   titleColor: null,
   textColor: null,
@@ -127,6 +128,8 @@ export default function PresentationForm({ spec, settings, onChange }) {
               onChange={(v) => set('showAxes', v)} />
             <CheckField label="Hiện đường lưới" checked={settings.showGrid}
               onChange={(v) => set('showGrid', v)} />
+            <CheckField label="Hiện logo NQS DATA" checked={settings.showBrandLogo !== false}
+              onChange={(v) => set('showBrandLogo', v)} />
           </div>
         </section>
       )}
