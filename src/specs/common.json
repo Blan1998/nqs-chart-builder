@@ -20,8 +20,8 @@
     "neutral": "#94A3B8"
   },
   "theme": {
-    "light": { "background": "#FFFFFF", "grid": "#E2E8F0", "label": "#334155", "axis": "#94A3B8" },
-    "dark":  { "background": "#0F172A", "grid": "#334155", "label": "#E2E8F0", "axis": "#94A3B8" }
+    "light": { "background": "#FFFFFF", "grid": "#E2E8F0", "label": "#334155", "axis": "#64748B" },
+    "dark":  { "background": "#0F172A", "grid": "#334155", "label": "#E2E8F0", "axis": "#B4C0D0" }
   },
   "defaults": {
     "theme": "light",

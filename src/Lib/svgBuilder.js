@@ -373,7 +373,10 @@ function runtime(DATA) {
   }
 
   function fmt(v, d) {
-    return Number(v).toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
+    var n = Number(v);
+    // Tránh hiện "-0" (số âm rất nhỏ hoặc -0 sau khi làm tròn)
+    if (Math.abs(n) < Math.pow(10, -(d || 0)) / 2) n = 0;
+    return n.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
 
   function dpOf(v) {
@@ -493,7 +496,8 @@ function runtime(DATA) {
       var tLines = wrapText(S.title, TSZ, true, Math.round(W * 0.67) - 30, g);
       tLines.forEach(function (ln, li) {
         label(ln, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
-        y += Math.round(TSZ * 1.2) + (li === tLines.length - 1 ? 4 : 0);
+        // Dòng cuối: khoảng cách xuống dòng đơn vị gọn hơn khoảng cách giữa các dòng tiêu đề
+        y += li === tLines.length - 1 ? Math.round(TSZ * 0.3 + LS * 1.1) : Math.round(TSZ * 1.2);
       });
     }
     if (S.subtitle) {
@@ -505,9 +509,10 @@ function runtime(DATA) {
       var fsz = LS;
       var lineH = fsz * 1.6 + 8;
       var x = 30;
-      y += 20 + Math.round(LS * 0.6);
+      y += 8 + Math.round(LS * 0.5);
       entries.forEach(function (en) {
-        var itemW = 22 + String(en.name).length * fsz * 0.6 + 30;
+        var sw = Math.max(14, Math.round(LS * 0.7)); // ô màu tăng theo cỡ chữ
+        var itemW = sw + 8 + String(en.name).length * fsz * 0.6 + 30;
         if (x > 30 && x + itemW > W - 30) {
           x = 30;
           y += lineH;
@@ -517,8 +522,8 @@ function runtime(DATA) {
           opacity: hidden[en.name] ? 0.35 : 1,
           cursor: IX.legendToggle ? 'pointer' : 'default',
         }, g);
-        el('rect', { x: x, y: y - 11, width: 14, height: 14, rx: 4, fill: en.color }, item);
-        label(en.name, { x: x + 22, y: y, 'font-size': 14 }, item);
+        el('rect', { x: x, y: Math.round(y - LS * 0.4 - sw / 2), width: sw, height: sw, rx: 4, fill: en.color }, item);
+        label(en.name, { x: x + sw + 8, y: y, 'font-size': 14 }, item);
         x += itemW;
       });
       y += 10;
