@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   titleColor: null,
   textColor: null,
   insideColor: null,
+  bgColor: null,
   titleSize: 26,
   labelSize: 14,
   dataSize: 15,

@@ -194,7 +194,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
   // Màu thương hiệu chỉ có tác dụng khi đang bật Dùng Logo và đã chọn dùng màu logo
   const brandOn = settings.useLogo && settings.useBrandColor ? brand : {};
   const data = prepareData(spec, rows, colors, brandOn);
-  const theme = common.theme[settings.theme] ?? common.theme.light;
+  const theme = themeOf(settings);
   // Cột cạnh nhau / Cột chồng có chuỗi chọn "Đường" thì vẽ bằng bộ vẽ Kết hợp (cột + đường)
   const hasLine = Array.isArray(data.series) && data.series.some((s) => s.kind === 'line');
   const drawType = (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
@@ -225,9 +225,15 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
   return payload;
 }
 
+// Giao diện sáng/tối, cho phép ghi đè màu nền biểu đồ bằng settings.bgColor
+function themeOf(settings) {
+  const base = common.theme[settings.theme] ?? common.theme.light;
+  return settings.bgColor ? { ...base, background: settings.bgColor } : base;
+}
+
 export function buildSvgDocument(spec, settings, options, rows, colors = {}, logos = {}, brand = {}) {
   const payload = buildPayload(spec, settings, options, rows, colors, logos, brand);
-  const theme = common.theme[settings.theme] ?? common.theme.light;
+  const theme = themeOf(settings);
   // Escape để dữ liệu không thể đóng thẻ script
   const json = JSON.stringify(payload)
     .replace(/</g, '\\u003c')
@@ -368,6 +374,32 @@ function runtime(DATA) {
     return { lo: lo, hi: hi, step: step };
   }
 
+  // Hai trục (trái/phải) dùng chung đường 0: cùng số vạch dương và cùng số vạch âm.
+  // Chọn (P vạch dương, N vạch âm) và bước đẹp cho từng trục sao cho ít khoảng trống thừa nhất.
+  function alignZero(a, b) {
+    var anyNeg = a.lo < 0 || b.lo < 0;
+    var best = null;
+    for (var N = anyNeg ? 1 : 0; N <= 5; N++) {
+      for (var P = 1; P <= 8; P++) {
+        if (P + N < 4 || P + N > 9) continue;
+        var cost = 0;
+        var steps = [];
+        [a, b].forEach(function (d) {
+          var need = Math.max(d.hi / P, N ? -d.lo / N : 0);
+          var st = niceStep(need);
+          steps.push(st);
+          cost += (P + N) * st / Math.max(1e-9, d.hi - d.lo);
+        });
+        if (!best || cost < best.cost - 1e-9) best = { cost: cost, P: P, N: N, steps: steps };
+      }
+    }
+    if (!best) return [a, b];
+    return [a, b].map(function (d, i) {
+      var st = best.steps[i];
+      return { lo: -best.N * st, hi: best.P * st, step: st };
+    });
+  }
+
   function ticksOf(d) {
     var out = [];
     for (var i = Math.round(d.lo / d.step); i <= Math.round(d.hi / d.step); i++) out.push(i * d.step);
@@ -386,7 +418,7 @@ function runtime(DATA) {
   }
 
   function drawHeader(g) {
-    var y = 42;
+    var y = 42 + 20; // chừa lề trên để tiêu đề không dính mép
     if (S.title) {
       label(S.title, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
       y += Math.round(TSZ * 1.2) + 4;
@@ -716,6 +748,16 @@ function runtime(DATA) {
     var x1 = W - 80 - legendW;
     var y0 = top + 20;
     var y1 = bottomY - 34;
+    // Nhãn trục X: nếu có nhãn rộng hơn khoảng cách giữa các mốc thì dựng đứng cả hàng, chừa thêm chỗ bên dưới
+    var xFs = 13;
+    var xLongest = D.xs.reduce(function (m, c) { return Math.max(m, String(c).length); }, 0);
+    var xEst = xLongest * xFs * LSZ * 0.62;
+    var rotateX = false;
+    if (D.xs.length > 0) {
+      var bandGuess = (W - 160) / D.xs.length;
+      rotateX = xEst > bandGuess * 0.9;
+      if (rotateX) y1 = Math.max(top + 120, bottomY - 20 - Math.ceil(xEst * 0.574 + xFs * 0.82) - 8);
+    }
     var visible = D.series.filter(function (s) { return !hidden[s.name]; });
     var bars = visible.filter(function (s) { return s.kind !== 'line'; });
     var lines = visible.filter(function (s) { return s.kind === 'line'; });
@@ -731,6 +773,12 @@ function runtime(DATA) {
       var zb = O.startAtZero !== false;
       var dl = bVals.length ? domainFor(bVals, zb) : null;
       var dr = lVals.length ? domainFor(lVals, zb) : null;
+      // Cả hai trục cùng bắt đầu từ 0; giá trị âm đi xuống dưới đường 0 chung
+      if (dl && dr && zb) {
+        var al = alignZero(dl, dr);
+        dl = al[0];
+        dr = al[1];
+      }
       var lft = dl || dr;
       var rgt = dr || dl;
       if (dr) x1 = Math.min(x1, W - axisPad(rgt));
@@ -818,7 +866,13 @@ function runtime(DATA) {
       });
 
       D.xs.forEach(function (cat, ci) {
-        catLabel(cat, x0 + band * (ci + 0.5), y1 + 20, band, { 'font-size': 13 }, g);
+        var cx = x0 + band * (ci + 0.5);
+        if (rotateX && !logoOf(cat)) {
+          var ty = y1 + 20;
+          label(cat, { x: cx, y: ty, 'text-anchor': 'end', 'font-size': xFs, transform: 'rotate(-35 ' + cx + ' ' + ty + ')' }, g);
+        } else {
+          catLabel(cat, cx, y1 + 20, band, { 'font-size': xFs }, g);
+        }
       });
     }
 

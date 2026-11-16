@@ -209,6 +209,13 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
             onColor={(v) => onSettingsChange({ ...settings, textColor: v, titleColor: v })}
           />
           <HexRow
+            label="Màu nền biểu đồ"
+            value={settings.bgColor}
+            fallback={settings.theme === 'dark' ? '#0F172A' : '#FFFFFF'}
+            resetLabel="Mặc định"
+            onColor={(v) => onSettingsChange({ ...settings, bgColor: v })}
+          />
+          <HexRow
             label="Số liệu bên trong cột/khúc"
             value={settings.insideColor}
             fallback="#FFFFFF"
