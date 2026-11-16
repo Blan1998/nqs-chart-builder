@@ -31,6 +31,7 @@ export default function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [message, setMessage] = useState('');
   const [sideW, setSideW] = useState(280);
+  const [resetKey, setResetKey] = useState(0);
 
   // Kéo mép phải của menu để đổi độ rộng; khi menu hẹp, phần nội dung rộng ra
   function startResize(e) {
@@ -98,6 +99,20 @@ export default function App() {
     }
   }
 
+  // Làm lại từ đầu: xóa toàn bộ lựa chọn, dữ liệu, màu và thiết lập, quay về bước 1
+  function resetAll() {
+    if (!window.confirm('Làm lại từ đầu? Toàn bộ lựa chọn, dữ liệu và thiết lập hiện tại sẽ bị xóa (file đã lưu không bị ảnh hưởng).')) return;
+    setChartId(null);
+    setOptionsByChart({});
+    setDataByChart({});
+    setColorsByChart({});
+    setSeriesByChart({});
+    setSettings(DEFAULT_SETTINGS);
+    setStep(1);
+    setResetKey((k) => k + 1);
+    setMessage('Đã đặt lại, bắt đầu từ đầu.');
+  }
+
   async function openProject() {
     if (!window.projectApi) {
       setMessage('Chức năng mở chỉ hoạt động trong app desktop.');
@@ -149,6 +164,7 @@ export default function App() {
         <div className="sidebar-tools">
           <button onClick={saveProject}>Lưu cấu hình</button>
           <button onClick={openProject}>Mở cấu hình</button>
+          <button onClick={resetAll}>Làm lại từ đầu</button>
           {message && <p className="status">{message}</p>}
         </div>
 
@@ -160,7 +176,7 @@ export default function App() {
 
       <div className="resizer" onMouseDown={startResize} title="Kéo để đổi độ rộng menu" />
 
-      <main className="main">
+      <main className="main" key={resetKey}>
         {step === 1 && (
           <Home
             charts={Object.values(CHART_SPECS)}
