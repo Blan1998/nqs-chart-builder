@@ -878,8 +878,8 @@ function runtime(DATA) {
         el('line', { x1: x0, y1: y0, x2: x0, y2: y1, stroke: T.axis }, g);
         el('line', { x1: x0, y1: y1, x2: x1 + (dr ? 0 : 0), y2: y1, stroke: T.axis }, g);
         if (dr) el('line', { x1: x1, y1: y0, x2: x1, y2: y1, stroke: T.axis }, g);
-        if (O.leftUnit) label(O.leftUnit, { x: x0, y: y0 - 8, 'font-size': 12, fill: TXT || T.axis }, g);
-        if (O.rightUnit && dr) label(O.rightUnit, { x: x1, y: y0 - 8, 'text-anchor': 'start', 'font-size': 12, fill: TXT || T.axis }, g);
+        if (O.leftUnit) label(O.leftUnit, { x: x0, y: Math.round(y0 - LS * 0.8 - 4), 'font-size': 12, fill: TXT || T.axis }, g);
+        if (O.rightUnit && dr) label(O.rightUnit, { x: x1, y: Math.round(y0 - LS * 0.8 - 4), 'text-anchor': 'start', 'font-size': 12, fill: TXT || T.axis }, g);
       }
 
       var inner = band * 0.6;
