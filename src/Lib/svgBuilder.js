@@ -462,12 +462,12 @@ function runtime(DATA) {
 
   function drawHeader(g) {
     var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
-    // Logo nằm ở 1/3 bên phải, căn trái theo cột đó, giữa theo chiều dọc với dòng tiêu đề đầu tiên
+    // Logo nằm ở 1/3 bên phải, căn phải theo mép biểu đồ, giữa theo chiều dọc với dòng tiêu đề đầu tiên
     if (S.brandLogo) {
       var lgW = Math.round(Math.min(190, W * 0.16));
       var lgH = Math.round(lgW / S.brandLogoRatio);
       var lgY = Math.max(10, Math.round(y - TSZ * 0.35 - lgH / 2));
-      el('image', { href: S.brandLogo, x: Math.round(W * 0.67), y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMinYMid meet' }, g);
+      el('image', { href: S.brandLogo, x: W - 30 - lgW, y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMaxYMid meet' }, g);
     }
     if (S.title) {
       // Tiêu đề căn trái, rộng tối đa khoảng 2/3 biểu đồ, dài hơn thì xuống dòng
