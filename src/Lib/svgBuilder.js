@@ -460,8 +460,8 @@ function runtime(DATA) {
   function drawHeader(g) {
     var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
     if (S.title) {
-      // Tiêu đề dài thì xuống dòng theo bề rộng biểu đồ
-      var tLines = wrapText(S.title, TSZ, true, W - 60, g);
+      // Tiêu đề căn trái, rộng tối đa khoảng 2/3 biểu đồ, dài hơn thì xuống dòng
+      var tLines = wrapText(S.title, TSZ, true, Math.round(W * 0.67) - 30, g);
       tLines.forEach(function (ln, li) {
         label(ln, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
         y += Math.round(TSZ * 1.2) + (li === tLines.length - 1 ? 4 : 0);
