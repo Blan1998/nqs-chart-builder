@@ -383,6 +383,24 @@ function runtime(DATA) {
     return n.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
 
+  // Tooltip gộp: tiêu đề là mốc/danh mục, mỗi dòng sau là một chuỗi đang hiển thị và giá trị tại mốc đó
+  // withShare (cột/vùng chồng tỷ trọng): thêm phần trăm trong tổng
+  function tipAll(ci, cat, withShare) {
+    var NLc = String.fromCharCode(10);
+    var sers = D.series.filter(function (s) { return !hidden[s.name]; });
+    var total = 0;
+    sers.forEach(function (s) { var v = s.values[ci]; if (v !== null && v !== undefined && v > 0) total += v; });
+    var out = [String(cat)];
+    sers.forEach(function (s) {
+      var v = s.values[ci];
+      if (v === null || v === undefined) return;
+      var txt = fmt(v, dp) + (s.pct ? '%' : unit);
+      if (withShare && O.percent && total > 0 && v > 0) txt += ' (' + fmt(v / total * 100, dp) + '%)';
+      out.push(s.name + ': ' + txt);
+    });
+    return out.join(NLc);
+  }
+
   function dpOf(v) {
     return Number.isInteger(v) ? 0 : 2;
   }
@@ -751,7 +769,7 @@ function runtime(DATA) {
             height: Math.max(1, bhH - 4),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
+            'data-tip': tipAll(ci, cat),
           }, false, v >= 0, g);
           if (O.showLabels !== false) {
             var inside = !!O.labelInside;
@@ -803,7 +821,7 @@ function runtime(DATA) {
             height: Math.abs(py - base),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
+            'data-tip': tipAll(ci, cat),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
             label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
@@ -903,7 +921,7 @@ function runtime(DATA) {
             height: Math.abs(py - base),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + D.xs[ci] + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
+            'data-tip': tipAll(ci, D.xs[ci]),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
             CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, DS));
@@ -923,7 +941,7 @@ function runtime(DATA) {
           el('path', { d: d, fill: 'none', stroke: s.start, 'stroke-width': O.lineWidth || 2.5, 'stroke-linejoin': 'round', 'data-g': s.name }, g);
         }
         pts.forEach(function (p) {
-          var tipRaw = s.name + '\n' + D.xs[p.ci] + '\n' + fmt(p.v, dp) + (s.pct ? '%' : unit);
+          var tipRaw = tipAll(p.ci, D.xs[p.ci]);
           markerEl(O.markerShape || 'circle', p.x, p.y, O.markerSize != null ? O.markerSize : 6, T.background, s.start, g, { 'data-g': s.name });
           el('circle', { cx: p.x, cy: p.y, r: 10, fill: 'transparent', 'data-g': s.name, 'data-tip': tipRaw }, g);
           if (O.showLabels !== false) {
@@ -1020,7 +1038,7 @@ function runtime(DATA) {
             height: Math.max(0, h),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + cat + '\n' + vText,
+            'data-tip': tipAll(ci, cat, true),
           }, g);
           if (O.showLabels !== false && h > 16) {
             label(vText, {
@@ -1114,7 +1132,7 @@ function runtime(DATA) {
         var raw = val(L.s, ci);
         var vText = pct ? fmt(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + (L.s.pct ? '%' : unit);
         if (pts) el('circle', { cx: mapX(ci), cy: mapY(v), r: 4, fill: L.s.start, 'data-g': L.s.name, 'pointer-events': 'none' }, g);
-        el('circle', { cx: mapX(ci), cy: mapY((L.lo[ci] + v) / 2), r: 12, fill: 'transparent', 'data-g': L.s.name, 'data-tip': L.s.name + NL + D.xs[ci] + NL + vText }, g);
+        el('circle', { cx: mapX(ci), cy: mapY((L.lo[ci] + v) / 2), r: 12, fill: 'transparent', 'data-g': L.s.name, 'data-tip': tipAll(ci, D.xs[ci], true) }, g);
       });
     });
     D.xs.forEach(function (cat, ci) {
@@ -1300,7 +1318,7 @@ function runtime(DATA) {
           if (v === null) return;
           var px2 = mapX(idx);
           var py2 = mapY(v);
-          var tipRaw = s.name + '\n' + xs[idx] + '\n' + fmt(v, dp) + (s.pct ? '%' : unit);
+          var tipRaw = tipAll(idx, xs[idx]);
           if (O.showMarkers !== false) {
             markerEl(O.markerShape || 'circle', px2, py2, O.markerSize != null ? O.markerSize : 4, s.start, T.background, plot, { 'data-g': s.name });
           }
