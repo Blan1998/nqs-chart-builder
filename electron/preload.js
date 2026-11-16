@@ -29,4 +29,5 @@ contextBridge.exposeInMainWorld('aiApi', {
   status: () => ipcRenderer.invoke('ai:status'),
   setKey: (key) => ipcRenderer.invoke('ai:setKey', { key }),
   advise: (chartList) => ipcRenderer.invoke('ai:advise', { chartList }),
+  fillRows: (text, spec) => ipcRenderer.invoke('ai:fillRows', { text, spec }),
 });

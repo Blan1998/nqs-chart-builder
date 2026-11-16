@@ -273,6 +273,29 @@ async function geminiJson(key, system, user) {
   }
 }
 
+const FILL_SYSTEM =
+  'Bạn trích xuất dữ liệu để vẽ biểu đồ cho một tòa soạn báo ở Việt Nam. Người dùng dán văn bản thô (bảng copy từ Excel, ' +
+  'đoạn báo cáo, danh sách số liệu...). Hãy tìm các cặp "danh mục" và "giá trị số" để vẽ biểu đồ. ' +
+  'Giữ nguyên tên danh mục như trong văn bản (kể cả ngày tháng, quý, năm). Giá trị là số thuần: bỏ ký hiệu tiền tệ, ' +
+  'bỏ dấu phân cách hàng nghìn, dùng dấu chấm cho số thập phân, bỏ dấu %. Không bịa dữ liệu không có trong văn bản. ' +
+  'Trả JSON đúng dạng: {"rows":[{"category":"...","value":"..."}],"note":"<nhận xét ngắn bằng tiếng Việt: giả định đã dùng, dữ liệu thiếu hoặc mơ hồ>"}. ' +
+  'Không viết gì ngoài JSON.';
+
+ipcMain.handle('ai:fillRows', async (event, { text, spec }) => {
+  const key = await readApiKey();
+  if (!key) return { ok: false, error: 'NO_KEY' };
+  const input = String(text ?? '').slice(0, 20000);
+  if (!input.trim()) return { ok: false, error: 'Chưa có nội dung để AI đọc.' };
+  const res = await geminiJson(key, FILL_SYSTEM, 'Loại biểu đồ: ' + (spec?.label ?? '') + '. ' + (spec?.desc ?? '') + '\n\nVăn bản:\n' + input);
+  if (!res.ok) return { ok: false, error: res.error };
+  const raw = Array.isArray(res.data?.rows) ? res.data.rows : [];
+  const rows = raw.slice(0, 200)
+    .map((r) => ({ category: String(r?.category ?? '').trim(), value: String(r?.value ?? '').trim() }))
+    .filter((r) => r.category !== '' || r.value !== '');
+  if (rows.length === 0) return { ok: false, error: 'AI không tìm thấy dữ liệu dạng danh mục và giá trị trong nội dung này.' };
+  return { ok: true, rows, note: String(res.data?.note ?? '') };
+});
+
 const AUTO_SYSTEM =
   'Bạn phân tích cấu trúc bảng Excel để vẽ biểu đồ. Xác định: cột "category" là cột mốc thời gian hoặc nhãn trục X ' +
   '(ví dụ Quý, Tháng, Năm, tên đội, tên danh mục); các cột "series" là cột giá trị số cần vẽ thành chuỗi. ' +
