@@ -872,13 +872,3 @@ section { margin-bottom: 4px; }
 /* Tùy chọn dùng màu thương hiệu của logo (bước 5) */
 .brand-box { margin: 6px 0 16px; padding: 12px 14px; border: 1px dashed #d9d4ec; border-radius: 12px; background: #faf9ff; }
 .brand-box .hint { margin: 6px 0 0 26px; }
-
-/* Chọn cách nhập dữ liệu: AI tự điền / tự điền */
-.mode-switch { display: inline-flex; padding: 4px; margin-bottom: 14px; border-radius: 999px; background: #eef0f7; gap: 4px; }
-.mode-switch button { border: none; background: transparent; padding: 8px 18px; border-radius: 999px; font-weight: 600; color: #475569; cursor: pointer; }
-.mode-switch button.active { background: linear-gradient(135deg, #ee7224 0%, #3b1b70 100%); color: #fff; }
-.ai-fill { margin-bottom: 14px; }
-.ai-fill textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #dcdff0; border-radius: 12px; font: inherit; resize: vertical; }
-.ai-fill-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
-.ai-fill-actions .primary { background: linear-gradient(135deg, #ee7224 0%, #3b1b70 100%); color: #fff; border: none; }
-.hint-inline-gray { font-size: 13px; color: var(--muted); }

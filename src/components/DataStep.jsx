@@ -10,9 +10,6 @@ const KIND_CHARTS = ['groupedBar', 'combo', 'stackedBar'];
 export default function DataStep({ spec, rows, onRowsChange, series, onSeriesChange, settings, onSettingsChange }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const aiCapable = ['pie', 'bar', 'rankBar'].includes(spec.id);
-  const [mode, setMode] = useState(aiCapable ? 'ai' : 'manual'); // 'ai' = AI tự điền, 'manual' = người dùng tự điền
-  const [rawText, setRawText] = useState('');
   const errors = validateRows(spec, rows);
   const wide = !!series;
 
@@ -282,34 +279,6 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
     }
   }
 
-  // AI đọc văn bản thô và điền vào bảng danh mục / giá trị
-  async function aiFill() {
-    if (!window.aiApi || !window.aiApi.fillRows) {
-      setMessage('Chức năng AI chỉ hoạt động trong app desktop.');
-      return;
-    }
-    if (!rawText.trim()) {
-      setMessage('Hãy dán hoặc gõ nội dung dữ liệu vào ô phía trên.');
-      return;
-    }
-    if (rows.some((r) => Object.values(r).some((v) => String(v ?? '').trim() !== '')) && !window.confirm('AI sẽ thay thế dữ liệu hiện có trong bảng. Tiếp tục?')) return;
-    setBusy(true);
-    setMessage('AI đang đọc dữ liệu...');
-    try {
-      const res = await window.aiApi.fillRows(rawText, { id: spec.id, label: spec.label, desc: CHART_GUIDE[spec.id] ?? '' });
-      if (!res.ok) {
-        setMessage(res.error === 'NO_KEY' ? 'Chưa có khóa Gemini. Nhập khóa ở bước chọn loại biểu đồ, hoặc chuyển sang "Tự điền".' : res.error);
-        return;
-      }
-      onRowsChange(res.rows);
-      setMessage('AI đã điền ' + res.rows.length + ' dòng. Kiểm tra và sửa lại trong bảng nếu cần.' + (res.note ? ' Ghi chú: ' + res.note : ''));
-    } catch (e) {
-      setMessage('AI điền thất bại: ' + e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function importExcel() {
     if (!window.excelApi) {
       setMessage('Chức năng này chỉ hoạt động trong app desktop.');
@@ -340,31 +309,6 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
 
   return (
     <div>
-      {aiCapable && (
-        <div className="mode-switch">
-          <button className={mode === 'ai' ? 'active' : ''} onClick={() => setMode('ai')}>AI tự động điền</button>
-          <button className={mode === 'manual' ? 'active' : ''} onClick={() => setMode('manual')}>Tự điền</button>
-        </div>
-      )}
-
-      {aiCapable && mode === 'ai' && (
-        <div className="ai-fill">
-          <textarea
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            placeholder={'Dán dữ liệu thô vào đây: bảng copy từ Excel, đoạn văn bản báo cáo, danh sách số liệu... Ví dụ: Cổ phiếu KSF chiếm 45%, SCG 30%, KLB 25%'}
-            rows={6}
-            disabled={busy}
-          />
-          <div className="ai-fill-actions">
-            <button className="primary" onClick={aiFill} disabled={busy}>AI điền vào bảng</button>
-            <button onClick={importAuto} disabled={busy}>Nhập từ file Excel</button>
-            <span className="hint-inline-gray">AI điền xong, bạn vẫn sửa được trong bảng bên dưới.</span>
-          </div>
-        </div>
-      )}
-
-      {(!aiCapable || mode === 'manual') && (
       <div className="toolbar">
         <label className="check-field logo-toggle">
           <input type="checkbox" checked={!!(settings && settings.useLogo)} disabled={busy || !onSettingsChange}
@@ -376,7 +320,6 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
         <button onClick={stripSeparators} disabled={busy || rows.length === 0}>Bỏ dấu . và ,</button>
         <button onClick={wide || ['pie', 'bar', 'rankBar'].includes(spec.id) ? importAuto : importExcel} disabled={busy}>Nhập từ file Excel</button>
       </div>
-      )}
 
       <p className="hint">
         {wide
