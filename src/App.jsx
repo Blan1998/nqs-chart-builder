@@ -78,27 +78,6 @@ export default function App() {
     setDataByChart((prev) => ({ ...prev, [chartId]: newRows }));
   }
 
-  async function saveProject() {
-    if (!window.projectApi) {
-      setMessage('Chức năng lưu chỉ hoạt động trong app desktop.');
-      return;
-    }
-    try {
-      const res = await window.projectApi.save({
-        version: 1,
-        chartId,
-        optionsByChart,
-        settings,
-        dataByChart,
-        colorsByChart,
-        seriesByChart,
-      });
-      setMessage(res.ok ? `Đã lưu: ${res.filePath}` : 'Đã hủy lưu.');
-    } catch (e) {
-      setMessage(`Lưu thất bại: ${e.message}`);
-    }
-  }
-
   // Làm lại từ đầu: xóa toàn bộ lựa chọn, dữ liệu, màu và thiết lập, quay về bước 1
   function resetAll() {
     if (!window.confirm('Làm lại từ đầu? Toàn bộ lựa chọn, dữ liệu và thiết lập hiện tại sẽ bị xóa (file đã lưu không bị ảnh hưởng).')) return;
@@ -111,35 +90,6 @@ export default function App() {
     setStep(1);
     setResetKey((k) => k + 1);
     setMessage('Đã đặt lại, bắt đầu từ đầu.');
-  }
-
-  async function openProject() {
-    if (!window.projectApi) {
-      setMessage('Chức năng mở chỉ hoạt động trong app desktop.');
-      return;
-    }
-    try {
-      const res = await window.projectApi.open();
-      if (!res.ok) {
-        setMessage('Đã hủy mở.');
-        return;
-      }
-      const d = res.data;
-      if (d.version !== 1 || !CHART_SPECS[d.chartId]) {
-        setMessage('File không đúng định dạng cấu hình.');
-        return;
-      }
-      setChartId(d.chartId);
-      setOptionsByChart(d.optionsByChart ?? {});
-      setDataByChart(d.dataByChart ?? {});
-      setColorsByChart(d.colorsByChart ?? {});
-      setSeriesByChart(d.seriesByChart ?? {});
-      setSettings({ ...DEFAULT_SETTINGS, ...d.settings });
-      setStep(2);
-      setMessage('Đã mở cấu hình.');
-    } catch (e) {
-      setMessage(`Không đọc được file: ${e.message}`);
-    }
   }
 
   // Vị trí các mục menu căn theo ảnh nền (5 bước, rơi vào các số 1–5 đã có sẵn trên ảnh)
@@ -162,9 +112,7 @@ export default function App() {
         </nav>
 
         <div className="sidebar-tools">
-          <button onClick={saveProject}>Lưu cấu hình</button>
-          <button onClick={openProject}>Mở cấu hình</button>
-          <button onClick={resetAll}>Làm lại từ đầu</button>
+          <button className="reset-btn" onClick={resetAll}>Làm lại từ đầu</button>
           {message && <p className="status">{message}</p>}
         </div>
 
