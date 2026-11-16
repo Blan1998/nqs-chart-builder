@@ -464,7 +464,7 @@ function runtime(DATA) {
     var y = 40 + Math.round(TSZ * 1.1); // chừa lề trên theo cỡ tiêu đề
     // Logo nằm ở 1/3 bên phải, căn phải theo mép biểu đồ, giữa theo chiều dọc với dòng tiêu đề đầu tiên
     if (S.brandLogo) {
-      var lgW = Math.round(Math.min(190, W * 0.16));
+      var lgW = Math.round(Math.min(240, W * 0.22));
       var lgH = Math.round(lgW / S.brandLogoRatio);
       var lgY = Math.max(10, Math.round(y - TSZ * 0.35 - lgH / 2));
       el('image', { href: S.brandLogo, x: W - 30 - lgW, y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMaxYMid meet' }, g);
