@@ -4,31 +4,15 @@
   "group": "Xu hướng",
   "columns": [
     {
-      "key": "x",
+      "key": "category",
       "label": "Danh mục (trục X)",
       "type": "category",
       "required": true,
       "description": "Mốc thời gian hoặc nhãn trục X, giữ đúng thứ tự tăng dần",
       "example": "2024-Q1"
-    },
-    {
-      "key": "series",
-      "label": "Tên chuỗi",
-      "type": "series-name",
-      "required": true,
-      "description": "Tên chuỗi dữ liệu, có thể nhiều chuỗi",
-      "example": "Doanh thu"
-    },
-    {
-      "key": "value",
-      "label": "Giá trị",
-      "type": "number",
-      "required": true,
-      "description": "Giá trị của chuỗi tại mốc X",
-      "example": 42.5
     }
   ],
-  "layout": "long",
+  "layout": "wide",
   "options": [
     {
       "key": "lineStyle",
@@ -120,5 +104,9 @@
   "excelSheets": {
     "data": "Dữ liệu",
     "guide": "Hướng dẫn"
-  }
+  },
+  "defaultSeries": [
+    "Doanh thu",
+    "Chi phí"
+  ]
 }

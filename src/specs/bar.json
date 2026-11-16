@@ -86,5 +86,8 @@
   "excelSheets": {
     "data": "Dữ liệu",
     "guide": "Hướng dẫn"
-  }
+  },
+  "defaultSeries": [
+    "Giá trị"
+  ]
 }

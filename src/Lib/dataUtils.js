@@ -59,7 +59,7 @@ export function validateRows(spec, rows) {
   }
 
   // Line: không trùng (chuỗi, mốc X), và mỗi chuỗi có đủ mọi mốc X
-  if (spec.id === 'line') {
+  if (spec.id === 'line' && spec.columns.some((c) => c.key === 'series')) {
     const seen = new Map();
     const xsBySeries = new Map();
     const allXs = new Set();
@@ -81,7 +81,7 @@ export function validateRows(spec, rows) {
   }
 
   // Cột cạnh nhau (bảng ngang): tên chuỗi không rỗng, không trùng; danh mục không trùng
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || spec.id === 'pie' || spec.id === 'barRace' || spec.id === 'lineRank') {
+  if (spec.columns.length >= 1 && spec.defaultSeries) {
     const names = spec.columns.slice(1).map((c) => String(c.label ?? '').trim());
     names.forEach((n, k) => {
       if (!n) add(-1, null, `Chuỗi thứ ${k + 1} chưa có tên.`);

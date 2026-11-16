@@ -84,7 +84,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
     return { xs: seriesCols.map((c) => c.label), entities: ents, pct: seriesCols.some((c) => c.pct) };
   }
 
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea') {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series'))) {
     const catRows = valid.filter((r) => !isBlank(r.category));
     const xsAll = catRows.map((r) => String(r.category).trim());
     return {
@@ -142,7 +142,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
   }
 
   const items = [];
-  const vcol = spec.id === 'pie' ? pieValueCol(spec) : { key: 'value' };
+  const vcol = ['pie', 'bar', 'rankBar'].includes(spec.id) ? pieValueCol(spec) : { key: 'value' };
   for (const r of valid) {
     if (isBlank(r.category)) continue;
     let n = toNumber(r[vcol.key]);
@@ -665,7 +665,7 @@ function runtime(DATA) {
     }
 
     items.forEach(function (it, i) {
-      var tipRaw = it.label + '\n' + fmt(it.value, dp) + unit;
+      var tipRaw = it.label + '\n' + fmt(it.value, dp) + (D.pct ? '%' : unit);
       var show = O.showLabels !== false;
       if (horizontal) {
         var c0 = y0 + band * i + (band - bw) / 2;
@@ -678,7 +678,7 @@ function runtime(DATA) {
         }
         else label(it.label, { x: x0 - 8, y: c0 + bw / 2 + 5, 'text-anchor': 'end', 'font-size': 13 }, g);
         if (show) {
-          label(fmt(it.value, dp) + unit, {
+          label(fmt(it.value, dp) + (D.pct ? '%' : unit), {
             x: px + (it.value >= 0 ? 6 : -6),
             y: c0 + bw / 2 + 5,
             'text-anchor': it.value >= 0 ? 'start' : 'end',
@@ -691,7 +691,7 @@ function runtime(DATA) {
         barEl({ x: cx0, y: Math.min(base, py), width: bw, height: Math.abs(py - base), fill: paint(it), 'data-g': it.label, 'data-tip': tipRaw }, true, it.value >= 0, g);
         catLabel(it.label, cx0 + bw / 2, y1 + 10 + LS, band, { 'font-size': 13 }, g);
         if (show) {
-          label(fmt(it.value, dp) + unit, {
+          label(fmt(it.value, dp) + (D.pct ? '%' : unit), {
             x: cx0 + bw / 2,
             y: it.value >= 0 ? (O.labelInside ? py + 18 : py - 6) : py + 16,
             'text-anchor': 'middle',
@@ -750,7 +750,7 @@ function runtime(DATA) {
             height: Math.max(1, bhH - 4),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + unit,
+            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
           }, false, v >= 0, g);
           if (O.showLabels !== false) {
             var inside = !!O.labelInside;
@@ -802,7 +802,7 @@ function runtime(DATA) {
             height: Math.abs(py - base),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + unit,
+            'data-tip': s.name + '\n' + cat + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
             label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
@@ -902,7 +902,7 @@ function runtime(DATA) {
             height: Math.abs(py - base),
             fill: paint(colorAt(s, ci)),
             'data-g': s.name,
-            'data-tip': s.name + '\n' + D.xs[ci] + '\n' + fmt(v, dp) + unit,
+            'data-tip': s.name + '\n' + D.xs[ci] + '\n' + fmt(v, dp) + (s.pct ? '%' : unit),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
             CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, DS));
@@ -922,7 +922,7 @@ function runtime(DATA) {
           el('path', { d: d, fill: 'none', stroke: s.start, 'stroke-width': O.lineWidth || 2.5, 'stroke-linejoin': 'round', 'data-g': s.name }, g);
         }
         pts.forEach(function (p) {
-          var tipRaw = s.name + '\n' + D.xs[p.ci] + '\n' + fmt(p.v, dp) + unit;
+          var tipRaw = s.name + '\n' + D.xs[p.ci] + '\n' + fmt(p.v, dp) + (s.pct ? '%' : unit);
           markerEl(O.markerShape || 'circle', p.x, p.y, O.markerSize != null ? O.markerSize : 6, T.background, s.start, g, { 'data-g': s.name });
           el('circle', { cx: p.x, cy: p.y, r: 10, fill: 'transparent', 'data-g': s.name, 'data-tip': tipRaw }, g);
           if (O.showLabels !== false) {
@@ -1011,7 +1011,7 @@ function runtime(DATA) {
           cum += share;
           var yTop = mapY(cum);
           var h = mapY(bottom) - yTop;
-          var vText = pct ? fmt(v / total * 100, dp) + '%' : fmt(v, dp) + unit;
+          var vText = pct ? fmt(v / total * 100, dp) + '%' : fmt(v, dp) + (s.pct ? '%' : unit);
           el('rect', {
             x: gx,
             y: yTop,
@@ -1111,7 +1111,7 @@ function runtime(DATA) {
       el('path', { d: dLine, fill: 'none', stroke: L.s.start, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'data-g': L.s.name, 'pointer-events': 'none' }, g);
       L.up.forEach(function (v, ci) {
         var raw = val(L.s, ci);
-        var vText = pct ? fmt(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + unit;
+        var vText = pct ? fmt(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + (L.s.pct ? '%' : unit);
         if (pts) el('circle', { cx: mapX(ci), cy: mapY(v), r: 4, fill: L.s.start, 'data-g': L.s.name, 'pointer-events': 'none' }, g);
         el('circle', { cx: mapX(ci), cy: mapY((L.lo[ci] + v) / 2), r: 12, fill: 'transparent', 'data-g': L.s.name, 'data-tip': L.s.name + NL + D.xs[ci] + NL + vText }, g);
       });
@@ -1299,7 +1299,7 @@ function runtime(DATA) {
           if (v === null) return;
           var px2 = mapX(idx);
           var py2 = mapY(v);
-          var tipRaw = s.name + '\n' + xs[idx] + '\n' + fmt(v, dp) + unit;
+          var tipRaw = s.name + '\n' + xs[idx] + '\n' + fmt(v, dp) + (s.pct ? '%' : unit);
           if (O.showMarkers !== false) {
             markerEl(O.markerShape || 'circle', px2, py2, O.markerSize != null ? O.markerSize : 4, s.start, T.background, plot, { 'data-g': s.name });
           }

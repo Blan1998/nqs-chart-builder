@@ -51,7 +51,7 @@ export default function App() {
   const spec = chartId ? CHART_SPECS[chartId] : null;
   const options = spec ? optionsByChart[chartId] ?? defaultsFor(spec) : {};
   const rows = spec ? dataByChart[chartId] ?? [{}] : [];
-  const series = spec && (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || spec.id === 'pie' || spec.id === 'barRace' || spec.id === 'lineRank') ? seriesByChart[chartId] ?? blankSeries(spec) : null;
+  const series = spec && spec.defaultSeries ? seriesByChart[chartId] ?? blankSeries(spec) : null;
   const gridSpec = spec ? (series ? wideSpecFor(spec, series) : spec) : null;
   const errors = gridSpec ? validateRows(gridSpec, rows) : [];
   const colors = spec ? colorsByChart[chartId] ?? {} : {};

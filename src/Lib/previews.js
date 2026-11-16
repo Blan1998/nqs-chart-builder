@@ -41,6 +41,9 @@ const RACE_SAMPLE = [{"name": "Argentina", "region": "Americas", "flag": "https:
 
 // Mẫu theo hàng: [danh mục, chuỗi 1, chuỗi 2, ...]
 const WIDE = {
+  bar: [['2022', 120], ['2023', 150], ['2024', 180]],
+  rankBar: [['Dallas Mavericks', 8250], ['Oklahoma City Thunder', 5050], ['LA Lakers', 3350], ['Miami Heat', 2750], ['Phoenix Suns', 2300], ['Indiana Pacers', 2150], ['Charlotte Hornets', 2130]],
+  line: [['2024-Q1', 42.5, 30], ['2024-Q2', 45, 31.5], ['2024-Q3', 47.2, 33]],
   pie: [['Nhóm A', 35], ['Nhóm B', 25], ['Nhóm C', 40]],
   groupedBar: [
     ['Bán hàng', 78, 65],

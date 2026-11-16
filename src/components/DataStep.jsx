@@ -358,13 +358,11 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
                           <option value="line">Đường</option>
                         </select>
                       )}
-                      {['combo', 'barRace', 'lineRank', 'pie'].includes(spec.id) && (
-                        <select value={s.pct ? 'pct' : 'num'} onChange={(e) => changePct(s.id, e.target.value === 'pct')}>
-                          <option value="num">Số</option>
-                          <option value="pct">%</option>
-                        </select>
-                      )}
-                      {spec.id === 'pie' && series.length > 1 && (
+                      <select value={s.pct ? 'pct' : 'num'} onChange={(e) => changePct(s.id, e.target.value === 'pct')}>
+                        <option value="num">Số</option>
+                        <option value="pct">%</option>
+                      </select>
+                      {['pie', 'bar', 'rankBar'].includes(spec.id) && series.length > 1 && (
                         <label className="draw-pick" title="Dùng cột này để vẽ biểu đồ">
                           <input type="radio" name="pie-draw" checked={s.draw ? true : (!series.some((x) => x.draw) && series[0].id === s.id)} onChange={() => setDrawn(s.id)} />
                           <span>Vẽ</span>
