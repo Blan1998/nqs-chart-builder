@@ -50,7 +50,7 @@ function pickBrand(brand, name, colors, key, p) {
 }
 
 // Chuyển dòng dữ liệu nhập tay thành cấu trúc dùng để vẽ
-export function prepareData(spec, rows, colors = {}, brand = {}) {
+export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
   const valid = rows.filter((r) => spec.columns.some((c) => !isBlank(r[c.key])));
   const hasBrand = !!brand && Object.keys(brand).length > 0;
 
@@ -84,13 +84,15 @@ export function prepareData(spec, rows, colors = {}, brand = {}) {
     return { xs: seriesCols.map((c) => c.label), entities: ents, pct: seriesCols.some((c) => c.pct) };
   }
 
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series')) || (spec.id === 'rankBar' && spec.columns.length > 2)) {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series')) || ((spec.id === 'rankBar' || spec.id === 'bar') && spec.columns.length > 2)) {
     let catRows = valid.filter((r) => !isBlank(r.category));
     // Thanh xếp hạng nhiều cột: xếp danh mục từ lớn đến nhỏ theo cột đầu tiên
-    if (spec.id === 'rankBar') {
+    const barSort = spec.id === 'bar' ? (options && options.sort) : null;
+    if (spec.id === 'rankBar' || barSort === 'asc' || barSort === 'desc') {
+      const dir = barSort === 'asc' ? -1 : 1;
       const k0 = spec.columns[1].key;
       const num = (r) => { const n = toNumber(r[k0]); return Number.isNaN(n) ? -Infinity : n; };
-      catRows = catRows.slice().sort((a, b) => num(b) - num(a));
+      catRows = catRows.slice().sort((a, b) => dir * (num(b) - num(a)));
     }
     const xsAll = catRows.map((r) => String(r.category).trim());
     return {
@@ -170,7 +172,7 @@ export function colorTargets(spec, rows) {
   if ((spec.id === 'pie' || spec.id === 'rankBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
   }
-  if (spec.id === 'bar') {
+  if (spec.id === 'bar' && data.items) {
     return [{ key: BAR_KEY, name: 'Các cột', fallback: defaultGrad(0).start, fallbackEnd: defaultGrad(0).end }];
   }
   if (spec.id === 'lineRank' || spec.id === 'barRace') {
@@ -203,12 +205,12 @@ export function embedCode(url) {
 export function buildPayload(spec, settings, options, rows, colors = {}, logos = {}, brand = {}) {
   // Màu thương hiệu chỉ có tác dụng khi đang bật Dùng Logo và đã chọn dùng màu logo
   const brandOn = settings.useLogo && settings.useBrandColor ? brand : {};
-  const data = prepareData(spec, rows, colors, brandOn);
+  const data = prepareData(spec, rows, colors, brandOn, options);
   const theme = themeOf(settings);
   // Cột cạnh nhau / Cột chồng có chuỗi chọn "Đường" thì vẽ bằng bộ vẽ Kết hợp (cột + đường)
   const hasLine = Array.isArray(data.series) && data.series.some((s) => s.kind === 'line');
-  // Thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau theo chiều ngang
-  const rankMulti = spec.id === 'rankBar' && Array.isArray(data.series);
+  // Cột đơn / thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau (thanh xếp hạng luôn ngang)
+  const rankMulti = (spec.id === 'rankBar' || spec.id === 'bar') && Array.isArray(data.series);
   const drawType = rankMulti ? 'groupedBar' : (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
   const payload = {
     type: drawType,
@@ -231,7 +233,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       dataSize: settings.dataSize || 18,
       lineLabelColor: settings.lineLabelColor || null,
     },
-    options: rankMulti ? { ...options, orientation: 'horizontal', showLegend: true, labelInside: false } : options,
+    options: rankMulti ? { ...options, orientation: spec.id === 'rankBar' ? 'horizontal' : options.orientation, showLegend: true, labelInside: false } : options,
     theme,
     data,
     logos: settings.useLogo ? logos : {},
