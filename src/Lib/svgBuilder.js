@@ -14,6 +14,8 @@ const DEFAULT_GRADIENTS = [
 ];
 const defaultGrad = (i) => DEFAULT_GRADIENTS[i % DEFAULT_GRADIENTS.length];
 const BAR_KEY = '__bar__';
+const DIV_POS = { start: '#1747A6', end: '#1747A6' };
+const DIV_NEG = { start: '#EE3A43', end: '#EE3A43' };
 const DEFAULT_DESCRIPTION = 'Dữ liệu: Người Quan Sát';
 const REGION_PALETTE = ['#2563EB', '#38BDF8', '#A46BDB', '#EC4899', '#F97316', '#14B8A6'];
 
@@ -84,11 +86,11 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
     return { xs: seriesCols.map((c) => c.label), entities: ents, pct: seriesCols.some((c) => c.pct) };
   }
 
-  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series')) || ((spec.id === 'rankBar' || spec.id === 'bar') && spec.columns.length > 2)) {
+  if (spec.id === 'groupedBar' || spec.id === 'combo' || spec.id === 'stackedBar' || spec.id === 'stackedArea' || (spec.id === 'line' && !spec.columns.some((c) => c.key === 'series')) || ((spec.id === 'rankBar' || spec.id === 'bar' || spec.id === 'divBar') && spec.columns.length > 2)) {
     let catRows = valid.filter((r) => !isBlank(r.category));
     // Thanh xếp hạng nhiều cột: xếp danh mục từ lớn đến nhỏ theo cột đầu tiên
     const barSort = spec.id === 'bar' ? (options && options.sort) : null;
-    if (spec.id === 'rankBar' || barSort === 'asc' || barSort === 'desc') {
+    if (spec.id === 'rankBar' || spec.id === 'divBar' || barSort === 'asc' || barSort === 'desc') {
       const dir = barSort === 'asc' ? -1 : 1;
       const k0 = spec.columns[1].key;
       const num = (r) => { const n = toNumber(r[k0]); return Number.isNaN(n) ? -Infinity : n; };
@@ -150,7 +152,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
   }
 
   const items = [];
-  const vcol = ['pie', 'bar', 'rankBar'].includes(spec.id) ? pieValueCol(spec) : { key: 'value' };
+  const vcol = ['pie', 'bar', 'rankBar', 'divBar'].includes(spec.id) ? pieValueCol(spec) : { key: 'value' };
   for (const r of valid) {
     if (isBlank(r.category)) continue;
     let n = toNumber(r[vcol.key]);
@@ -158,7 +160,8 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
     // Cột chọn kiểu % : ô nhập 0.35 hiểu là 35%
     if (vcol.pct && Math.abs(n) <= 1 && !String(r[vcol.key]).includes('%')) n *= 100;
     const label = String(r.category).trim();
-    const fallback = spec.id === 'bar' ? defaultGrad(0) : defaultGrad(items.length);
+    // Thanh tăng/giảm: xanh cho giá trị dương, đỏ cho giá trị âm
+    const fallback = spec.id === 'divBar' ? (n >= 0 ? DIV_POS : DIV_NEG) : spec.id === 'bar' ? defaultGrad(0) : defaultGrad(items.length);
     const colorKey = spec.id === 'bar' ? BAR_KEY : label;
     const p = pickBrand(brand, label, colors, colorKey, resolveColor(colors, colorKey, fallback));
     items.push({ label, value: n, start: p.start, mid: p.mid, dir: p.dir, end: p.end });
@@ -169,7 +172,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
 // Danh sách các đối tượng có thể đổi màu ở bước 5
 export function colorTargets(spec, rows) {
   const data = prepareData(spec, rows, {});
-  if ((spec.id === 'pie' || spec.id === 'rankBar') && data.items) {
+  if ((spec.id === 'pie' || spec.id === 'rankBar' || spec.id === 'divBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
   }
   if (spec.id === 'bar' && data.items) {
@@ -210,7 +213,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
   // Cột cạnh nhau / Cột chồng có chuỗi chọn "Đường" thì vẽ bằng bộ vẽ Kết hợp (cột + đường)
   const hasLine = Array.isArray(data.series) && data.series.some((s) => s.kind === 'line');
   // Cột đơn / thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau (thanh xếp hạng luôn ngang)
-  const rankMulti = (spec.id === 'rankBar' || spec.id === 'bar') && Array.isArray(data.series);
+  const rankMulti = (spec.id === 'rankBar' || spec.id === 'bar' || spec.id === 'divBar') && Array.isArray(data.series);
   const drawType = rankMulti ? 'groupedBar' : (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
   const payload = {
     type: drawType,
@@ -233,7 +236,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       dataSize: settings.dataSize || 18,
       lineLabelColor: settings.lineLabelColor || null,
     },
-    options: rankMulti ? { ...options, orientation: spec.id === 'rankBar' ? 'horizontal' : options.orientation, showLegend: true, labelInside: false } : options,
+    options: rankMulti ? { ...options, orientation: spec.id === 'rankBar' || spec.id === 'divBar' ? 'horizontal' : options.orientation, showLegend: true, labelInside: false } : options,
     theme,
     data,
     logos: settings.useLogo ? logos : {},
@@ -491,7 +494,7 @@ function runtime(DATA) {
   function legendEntries() {
     if (DATA.type === 'barRace' || DATA.type === 'lineRank') return [];
     if (DATA.type === 'pie') return D.items.map(function (it) { return { name: it.label, color: paint(it) }; });
-    if (DATA.type === 'bar' || DATA.type === 'rankBar') return [];
+    if (DATA.type === 'bar' || DATA.type === 'rankBar' || DATA.type === 'divBar') return [];
     return D.series.map(function (s) { return { name: s.name, color: paint(s.legendObj || s) }; });
   }
 
@@ -672,10 +675,10 @@ function runtime(DATA) {
   function drawBar(g, top) {
     var items = D.items.slice();
     if (O.sort === 'asc') items.sort(function (a, b) { return a.value - b.value; });
-    if (O.sort === 'desc' || DATA.type === 'rankBar') items.sort(function (a, b) { return b.value - a.value; });
+    if (O.sort === 'desc' || DATA.type === 'rankBar' || DATA.type === 'divBar') items.sort(function (a, b) { return b.value - a.value; });
     if (items.length === 0) { noData(g); return; }
 
-    var horizontal = O.orientation === 'horizontal' || DATA.type === 'rankBar';
+    var horizontal = O.orientation === 'horizontal' || DATA.type === 'rankBar' || DATA.type === 'divBar';
     var x0 = horizontal ? 140 : 80;
     var x1 = W - 30;
     var y0 = top;
@@ -1630,7 +1633,7 @@ function runtime(DATA) {
     else if (DATA.type === 'lineRank') drawLineRank(root, top);
     else if (DATA.type === 'stackedBar') drawStacked(root, top);
     else if (DATA.type === 'stackedArea') drawStackedArea(root, top);
-    else if (DATA.type === 'rankBar') drawBar(root, top);
+    else if (DATA.type === 'rankBar' || DATA.type === 'divBar') drawBar(root, top);
     else drawLine(root, top);
     if (S.description) label(S.description, { x: 30, y: H - 18, 'font-size': 12, fill: TXT || T.axis }, root);
     playIntro();

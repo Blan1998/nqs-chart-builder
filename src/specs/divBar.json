@@ -1,0 +1,66 @@
+{
+  "id": "divBar",
+  "label": "Thanh ngang tăng/giảm",
+  "group": "So sánh",
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên từng thanh, xếp từ tăng nhiều nhất đến giảm nhiều nhất",
+      "example": "VPBank"
+    },
+    {
+      "key": "value",
+      "label": "Giá trị",
+      "type": "number",
+      "required": true,
+      "description": "Giá trị tăng (dương) hoặc giảm (âm)",
+      "example": 2150
+    }
+  ],
+  "options": [
+    {
+      "key": "showLabels",
+      "label": "Nhãn dữ liệu",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "startAtZero",
+      "label": "Trục bắt đầu từ 0",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 4
+    }
+  ],
+  "validation": [
+    "Không trùng tên danh mục",
+    "Giá trị phải là số, có thể âm"
+  ],
+  "interactions": [
+    "tooltip",
+    "highlight"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  },
+  "defaultSeries": [
+    "Giá trị"
+  ]
+}

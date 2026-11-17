@@ -8,6 +8,7 @@ import stackedArea from './stackedArea.json';
 import barRace from './barRace.json';
 import lineRank from './lineRank.json';
 import rankBar from './rankBar.json';
+import divBar from './divBar.json';
 
-export const CHART_SPECS = { pie, bar, line, groupedBar, combo, stackedBar, stackedArea, rankBar, barRace, lineRank };
+export const CHART_SPECS = { pie, bar, line, groupedBar, combo, stackedBar, stackedArea, rankBar, divBar, barRace, lineRank };
 export { default as common } from './common.json';

@@ -48,7 +48,7 @@ export function validateRows(spec, rows) {
   });
 
   // Trùng tên phân loại (Pie, Bar)
-  if (spec.id === 'pie' || spec.id === 'bar' || spec.id === 'rankBar') {
+  if (spec.id === 'pie' || spec.id === 'bar' || spec.id === 'rankBar' || spec.id === 'divBar') {
     const seen = new Map();
     rows.forEach((r, i) => {
       if (isBlank(r.category)) return;
