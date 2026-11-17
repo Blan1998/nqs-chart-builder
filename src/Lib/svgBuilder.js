@@ -1272,6 +1272,7 @@ function runtime(DATA) {
       var d = domainFor(vals, false);
       x0 = Math.max(x0, axisPad(d)); PLOT.x0 = x0; // chừa chỗ cho số trên trục để không bị cắt
       var span = d.hi - d.lo;
+      var ends = O.emphasizeEnds !== false && n > 12 && !zoomOn; // nhiều mốc: nhấn mạnh điểm đầu và cuối
       var i0 = view.s * (n - 1);
       var i1 = view.e * (n - 1);
       if (i1 <= i0) i1 = i0 + 1;
@@ -1289,10 +1290,28 @@ function runtime(DATA) {
         var last = Math.min(n - 1, Math.ceil(i1));
         var maxLabels = Math.max(2, Math.floor((x1 - x0) / 80));
         var step = Math.max(1, Math.ceil((last - first + 1) / maxLabels));
+        if (ends) {
+          // Nhiều mốc: luôn có nhãn đầu và cuối (căn mép), phần giữa thưa ra và tránh đè lên hai đầu
+          var lblW = function (t) { return String(t).length * LS * 0.62; };
+          var yL = y1 + 10 + LS;
+          label(xs[0], { x: x0, y: yL, 'text-anchor': 'start', 'font-size': 13, fill: TXT || T.axis }, g);
+          label(xs[n - 1], { x: x1, y: yL, 'text-anchor': 'end', 'font-size': 13, fill: TXT || T.axis }, g);
+          var leftEnd = x0 + lblW(xs[0]) + 14;
+          var rightStart = x1 - lblW(xs[n - 1]) - 14;
+          var lastX = leftEnd;
+          for (var im = 1; im < n - 1; im++) {
+            var pm = mapX(im);
+            var half = lblW(xs[im]) / 2 + 10;
+            if (pm - half < lastX || pm + half > rightStart) continue;
+            label(xs[im], { x: pm, y: yL, 'text-anchor': 'middle', 'font-size': 12, fill: TXT || T.axis }, g);
+            lastX = pm + half;
+          }
+        } else {
         for (var i = first; i <= last; i += step) {
           var px = mapX(i);
           if (px < x0 - 5 || px > x1 + 5) continue;
           catLabel(xs[i], px, y1 + 20, (x1 - x0) / Math.max(1, n), { 'font-size': 12, fill: TXT || T.axis }, g);
+        }
         }
       }
 
@@ -1328,16 +1347,24 @@ function runtime(DATA) {
           }, plot);
         });
 
+        var fi = -1;
+        var li = -1;
+        s.values.forEach(function (v, idx) { if (v !== null) { if (fi < 0) fi = idx; li = idx; } });
         s.values.forEach(function (v, idx) {
           if (v === null) return;
           var px2 = mapX(idx);
           var py2 = mapY(v);
           var tipRaw = tipAll(idx, xs[idx]);
-          if (O.showMarkers !== false) {
-            markerEl(O.markerShape || 'circle', px2, py2, O.markerSize != null ? O.markerSize : 4, s.start, T.background, plot, { 'data-g': s.name });
+          var isEnd = idx === fi || idx === li;
+          if (O.showMarkers !== false && (!ends || isEnd)) {
+            markerEl(O.markerShape || 'circle', px2, py2, (O.markerSize != null ? O.markerSize : 4) + (ends ? 2 : 0), s.start, T.background, plot, { 'data-g': s.name });
+          }
+          if (ends && isEnd) {
+            // Giá trị đầu và cuối nằm ngoài vùng cắt để không bị mất ở mép
+            label(fmt(v, dp) + (s.pct ? '%' : unit), { fill: LBLN, x: px2, y: py2 - 12, 'text-anchor': idx === fi ? 'start' : 'end', 'font-size': 12, 'font-weight': 'bold', 'pointer-events': 'none' }, g);
           }
           el('circle', { cx: px2, cy: py2, r: 8, fill: 'transparent', 'data-g': s.name, 'data-tip': tipRaw }, plot);
-          if (O.showLabels) {
+          if (O.showLabels && !ends) {
             label(fmt(v, dp), { fill: LBLN, x: px2, y: py2 - 10, 'text-anchor': 'middle', 'font-size': 12, 'pointer-events': 'none' }, plot);
           }
         });

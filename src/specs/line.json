@@ -32,6 +32,12 @@
       "default": true
     },
     {
+      "key": "emphasizeEnds",
+      "label": "Nhấn mạnh điểm đầu và cuối (khi nhiều mốc)",
+      "type": "boolean",
+      "default": true
+    },
+    {
       "key": "interpolation",
       "label": "Nội suy",
       "type": "select",
