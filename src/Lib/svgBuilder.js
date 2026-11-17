@@ -411,6 +411,9 @@ function runtime(DATA) {
     return out.join(NLc);
   }
 
+  // Khoảng cách cố định (6px) giữa đầu cột và nhãn số, tính theo cỡ chữ số liệu: dùng cho cả cột dương lẫn cột âm
+  function lblH() { return 6 + Math.round(DS * 0.75); }
+
   function dpOf(v) {
     return Number.isInteger(v) ? 0 : 2;
   }
@@ -722,7 +725,7 @@ function runtime(DATA) {
         if (show) {
           label(fmt(it.value, dp) + (D.pct ? '%' : unit), {
             x: cx0 + bw / 2,
-            y: it.value >= 0 ? (O.labelInside ? py + 18 : py - 6) : py + 16,
+            y: it.value >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()),
             'text-anchor': 'middle',
             'font-size': 13,
             fill: O.labelInside ? inkFor(it) : (TXT || T.label),
@@ -834,7 +837,7 @@ function runtime(DATA) {
             'data-tip': tipAll(ci, cat),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
-            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
+            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
         });
         catLabel(cat, x0 + band * ci + band / 2, y1 + 20, band, { 'font-size': 13 }, g);
@@ -935,8 +938,8 @@ function runtime(DATA) {
             'data-tip': tipAll(ci, D.xs[ci]),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
-            CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, DS));
-            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + 16 : py - 6) : py + 16, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 'bold', fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
+            CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), DS));
+            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 'bold', fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
         });
       });
