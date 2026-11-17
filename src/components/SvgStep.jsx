@@ -83,7 +83,8 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
   const slug = [baseSlug, authorPart, useUnique ? uniqueCode : ''].filter(Boolean).join('-');
   const url = nqsUrl(date, slug);
   const embed = embedCode(url);
-  const previewDoc = `<!doctype html><html><body style="margin:0;background:#fff">${svg}</body></html>`;
+  // Không cuộn trong khung xem trước: svg dạng block để không sinh khoảng trống dưới đáy
+  const previewDoc = `<!doctype html><html><head><style>html,body{margin:0;overflow:hidden;background:#fff}svg{display:block}</style></head><body>${svg}</body></html>`;
 
   function setColorFor(key, next) {
     onColorsChange({ ...colors, [key]: next });
@@ -124,6 +125,7 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
           <iframe
             title="Xem trước biểu đồ"
             sandbox="allow-scripts"
+            scrolling="no"
             srcDoc={previewDoc}
             style={{ aspectRatio: `${settings.width} / ${settings.height}` }}
           />
