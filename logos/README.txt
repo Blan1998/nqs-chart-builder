@@ -13,7 +13,8 @@ Quy cách đặt tên:
 
 PHÂN BIỆT NGÂN HÀNG VÀ CÔNG TY CHỨNG KHOÁN (tránh nhầm logo):
 - Ngân hàng: dùng tên ngân hàng thường gọi, không thêm hậu tố.
-    BIDV, VietinBank, Vietcombank, MB, VPBank, Techcombank, HDBank, ACB, Sacombank, SHB
+    BIDV, VietinBank, Vietcombank, MB, VPBank, Techcombank, HDBank, ACB, Sacombank, SHB,
+    TPBank, LPBank, NamABank
 - Công ty chứng khoán: dùng tên công ty chứng khoán; công ty thuộc ngân hàng thì
   dùng tên riêng của công ty, KHÔNG dùng tên ngân hàng.
     TCBS (của Techcombank), VPBankS (của VPBank), MBS (của MB), ACBS (của ACB),
