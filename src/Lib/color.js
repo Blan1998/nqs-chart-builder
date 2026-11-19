@@ -59,5 +59,5 @@ export const GRADIENT_PRESETS = [
   { name: 'Cam - Tím', start: '#FF6201', end: '#3B1B70' },
   { name: 'Hồng - Tím', start: '#EC4899', end: '#4C1D95' },
   { name: 'Xanh - Cyan', start: '#3B82F6', end: '#06B6D4' },
-  { name: 'Xanh lá - Teal', start: '#14B8A6', end: '#22C55E' },
+  { name: 'Xanh lá - Teal', start: '#008300', end: '#1BAF7B' },
 ];

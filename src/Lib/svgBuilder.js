@@ -14,6 +14,8 @@ const DEFAULT_GRADIENTS = [
 ];
 const defaultGrad = (i) => DEFAULT_GRADIENTS[i % DEFAULT_GRADIENTS.length];
 const BAR_KEY = '__bar__';
+// Biểu đồ cột có thêm cột giá trị: cột đầu giữ màu mặc định, cột thứ hai mặc định là gradient xanh lá
+const COL2_GRAD = { start: '#008300', end: '#1BAF7B' };
 const DIV_POS = { start: '#1747A6', end: '#1747A6' };
 const DIV_NEG = { start: '#EE3A43', end: '#EE3A43' };
 const DEFAULT_DESCRIPTION = 'Dữ liệu: Người Quan Sát';
@@ -100,7 +102,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
     const wideOut = {
       xs: xsAll,
       series: spec.columns.slice(1).map((c, i) => {
-        const p = resolveColor(colors, c.label, defaultGrad(i));
+        const p = resolveColor(colors, c.label, i === 1 && ['bar', 'rankBar', 'divBar'].includes(spec.id) ? COL2_GRAD : defaultGrad(i));
         // Màu thương hiệu: mỗi cột lấy màu logo của danh mục; chuỗi sau nhạt dần. Chuỗi dạng đường giữ màu riêng.
         const brandOn = hasBrand && (c.kind || 'bar') !== 'line' && !(colors[c.label] && colors[c.label].start);
         const brandBars = brandOn ? {
