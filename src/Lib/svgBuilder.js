@@ -97,7 +97,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
       catRows = catRows.slice().sort((a, b) => dir * (num(b) - num(a)));
     }
     const xsAll = catRows.map((r) => String(r.category).trim());
-    return {
+    const wideOut = {
       xs: xsAll,
       series: spec.columns.slice(1).map((c, i) => {
         const p = resolveColor(colors, c.label, defaultGrad(i));
@@ -122,6 +122,13 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
         };
       }),
     };
+    // Cột đơn / thanh nhiều cột: màu riêng của từng danh mục áp cho chuỗi đầu tiên (kỳ chính)
+    if (['bar', 'rankBar', 'divBar'].includes(spec.id) && wideOut.series.length) {
+      const s0 = wideOut.series[0];
+      const own = xsAll.map((x) => (colors[x] && colors[x].start ? resolveColor(colors, x, { start: s0.start, end: s0.end }) : null));
+      if (own.some(Boolean)) s0.catColors = xsAll.map((x, i) => own[i] || (s0.catColors && s0.catColors[i]) || null);
+    }
+    return wideOut;
   }
 
   if (spec.id === 'line') {
@@ -185,6 +192,11 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
 export function colorTargets(spec, rows) {
   if (spec.id === 'rangeDot') return [];
   const data = prepareData(spec, rows, {});
+  if (['bar', 'rankBar', 'divBar'].includes(spec.id) && data.series) {
+    // Nhiều cột giá trị: màu từng cột, cộng màu riêng từng danh mục (áp cho cột đầu tiên)
+    return data.series.map((s) => ({ key: s.name, name: s.name, fallback: s.start, fallbackEnd: s.end }))
+      .concat(data.xs.map((x) => ({ key: x, name: x, fallback: data.series[0].start, fallbackEnd: data.series[0].end })));
+  }
   if ((spec.id === 'pie' || spec.id === 'rankBar' || spec.id === 'divBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
   }
