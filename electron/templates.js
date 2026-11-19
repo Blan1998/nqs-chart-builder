@@ -27,13 +27,6 @@ const SAMPLE_ROWS = {
   ],
 };
 
-SAMPLE_ROWS.groupedBar = [
-  ['Bán hàng', 78, 65],
-  ['Tài chính', 60, 65],
-  ['Marketing', 45, 65],
-  ['Nhân sự', 30, 65],
-];
-
 SAMPLE_ROWS.combo = [
   ['Q4/2024', 1826.1, 216.5],
   ['Q1/2025', 1269.1, 211.9],

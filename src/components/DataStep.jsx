@@ -5,12 +5,12 @@ import { newSeriesId } from '../lib/wide.js';
 import { askConfirm } from '../lib/confirm.js';
 
 // Các loại nhiều chuỗi cho chọn từng chuỗi là Cột hoặc Đường
-const KIND_CHARTS = ['groupedBar', 'combo', 'stackedBar'];
+const KIND_CHARTS = ['combo', 'stackedBar'];
 
 // Bước 4: nhập dữ liệu trực tiếp. Với bảng ngang (series != null) có thêm, đổi tên, xóa cột chuỗi.
 // Chọn mặc định kỳ gốc: cột có tên kiểu "đầu năm", "cùng kỳ", "kỳ trước"...; không có thì lấy cột thứ hai
 const BASE_NAME = /đầu năm|đầu kỳ|cùng kỳ|kỳ trước|quý trước|năm trước|năm ngoái|trước đó|\bcũ\b|base|prior|previous/i;
-const CHANGE_CHARTS = ['bar', 'rankBar', 'divBar', 'groupedBar'];
+const CHANGE_CHARTS = ['bar', 'rankBar', 'divBar'];
 
 export default function DataStep({ spec, rows, onRowsChange, series, onSeriesChange, settings, onSettingsChange }) {
   const [message, setMessage] = useState('');
@@ -398,7 +398,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
                         onChange={(e) => renameSeries(s.id, e.target.value)}
                         onPaste={(e) => handlePaste(e, 0, j, true)}
                       />
-                      {['groupedBar', 'combo', 'stackedBar'].includes(spec.id) && (
+                      {['combo', 'stackedBar'].includes(spec.id) && (
                         <select value={s.kind ?? 'bar'} onChange={(e) => changeKind(s.id, e.target.value)}>
                           <option value="bar">Cột</option>
                           <option value="line">Đường</option>

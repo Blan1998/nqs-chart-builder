@@ -312,7 +312,7 @@ function sanitizeMapping(d, n, chartId) {
   const kinds = {};
   series.forEach((i) => {
     const k = d.kinds?.[String(i)];
-    kinds[i] = ['combo', 'groupedBar', 'stackedBar'].includes(chartId) ? (k === 'line' ? 'line' : 'bar') : undefined;
+    kinds[i] = ['combo', 'stackedBar'].includes(chartId) ? (k === 'line' ? 'line' : 'bar') : undefined;
   });
   return { category, series, kinds };
 }

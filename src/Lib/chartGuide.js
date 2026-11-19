@@ -1,9 +1,8 @@
 // Mô tả ngắn từng loại, dùng để AI gợi ý loại phù hợp với dữ liệu
 export const CHART_GUIDE = {
   pie: 'Tỷ lệ các phần trong một tổng (cơ cấu, thị phần). Phù hợp khi có ít phần (dưới 7).',
-  bar: 'So sánh giá trị giữa các danh mục hoặc các mốc thời gian, một chuỗi dữ liệu.',
+  bar: 'So sánh giá trị giữa các danh mục hoặc các mốc thời gian. Thêm cột giá trị thì thành các cột cạnh nhau để so sánh nhiều chuỗi.',
   line: 'Xu hướng theo thời gian của một hoặc nhiều chuỗi, nhìn tăng giảm qua các mốc.',
-  groupedBar: 'So sánh nhiều chuỗi giữa các danh mục, mỗi danh mục có các cột cạnh nhau.',
   combo: 'Kết hợp cột và đường, dùng khi hai chuỗi khác đơn vị hoặc khác quy mô.',
   stackedBar: 'Cơ cấu của tổng theo từng mốc, các phần cộng lại thành tổng, có thể chuyển 100%.',
   stackedArea: 'Vùng chồng: thay đổi cơ cấu (hoặc tổng) của nhiều thành phần qua các mốc thời gian, có thể chuyển 100%.',

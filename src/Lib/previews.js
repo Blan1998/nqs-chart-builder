@@ -53,12 +53,6 @@ const WIDE = {
   rankBar: [['Dallas Mavericks', 8250], ['Oklahoma City Thunder', 5050], ['LA Lakers', 3350], ['Miami Heat', 2750], ['Phoenix Suns', 2300], ['Indiana Pacers', 2150], ['Charlotte Hornets', 2130]],
   line: [['2024-Q1', 42.5, 30], ['2024-Q2', 45, 31.5], ['2024-Q3', 47.2, 33]],
   pie: [['Nhóm A', 35], ['Nhóm B', 25], ['Nhóm C', 40]],
-  groupedBar: [
-    ['Bán hàng', 78, 65],
-    ['Tài chính', 60, 65],
-    ['Marketing', 45, 65],
-    ['Nhân sự', 30, 65],
-  ],
   combo: [
     ['Q4/2024', 1826.1, 216.5],
     ['Q1/2025', 1269.1, 211.9],
