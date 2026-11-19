@@ -338,12 +338,19 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
         {' '}Số thập phân dùng dấu chấm hoặc dấu phẩy. Cột có dấu * là bắt buộc.
       </p>
 
-      {wide && CHANGE_CHARTS.includes(spec.id) && series.length >= 2 && settings && onSettingsChange && (() => {
+      {wide && CHANGE_CHARTS.includes(spec.id) && settings && onSettingsChange && (() => {
         const cc = settings.changeCol || { on: false, curId: null, baseId: null, title: 'Tăng/giảm' };
         const valid = (id) => series.some((s) => s.id === id);
         const setChange = (patch) => onSettingsChange({ ...settings, changeCol: { ...cc, ...patch } });
         const toggle = (on) => {
           if (!on) return setChange({ on: false });
+          // Mới có một cột giá trị: tự thêm cột kỳ gốc để có cái so sánh
+          if (series.length < 2) {
+            const added = { id: newSeriesId(), name: 'Đầu năm' };
+            onSeriesChange([...series, added], rows);
+            setChange({ on: true, curId: series[0].id, baseId: added.id });
+            return;
+          }
           const base = series.find((s) => BASE_NAME.test(s.name)) || series[1];
           const cur = series.find((s) => s.id !== base.id);
           setChange({ on: true, curId: valid(cc.curId) ? cc.curId : cur.id, baseId: valid(cc.baseId) ? cc.baseId : base.id });
@@ -352,7 +359,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
           <div className="change-box">
             <label className="check-field">
               <input type="checkbox" checked={!!cc.on} onChange={(e) => toggle(e.target.checked)} />
-              <span>Tự tính mức tăng/giảm, hiện ở lề phải biểu đồ (áp dụng khi biểu đồ vẽ ngang)</span>
+              <span>Tự tính mức tăng/giảm, hiện ở lề phải biểu đồ (cần 2 cột giá trị, biểu đồ vẽ ngang)</span>
             </label>
             {cc.on && (
               <div className="change-opts">
