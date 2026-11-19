@@ -3,6 +3,13 @@ const ExcelJS = require('exceljs');
 
 // Dữ liệu ví dụ cho từng loại. Thêm loại mới thì thêm một dòng ở đây.
 const SAMPLE_ROWS = {
+  rangeDot: [
+    ['FRT', 19, 29, 45, 19.2],
+    ['MWG', 17.5, 19.5, 37, 9.6],
+    ['PET', 15.5, 18.5, 26.5, 26.7],
+    ['DGW', 12, 16.5, 21.5, 9.5],
+    ['PNJ', 13, 14, 16, 4.4],
+  ],
   pie: [
     ['Nhóm A', 35],
     ['Nhóm B', 25],

@@ -151,6 +151,15 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
     };
   }
 
+  if (spec.id === 'rangeDot') {
+    const num = (v) => { const n = toNumber(v); return Number.isNaN(n) ? null : n; };
+    return {
+      range: valid.filter((r) => !isBlank(r.category)).map((r) => ({
+        label: String(r.category).trim(), low: num(r.low), mid: num(r.mid), high: num(r.high), cur: num(r.current),
+      })),
+    };
+  }
+
   const items = [];
   const vcol = ['pie', 'bar', 'rankBar', 'divBar'].includes(spec.id) ? pieValueCol(spec) : { key: 'value' };
   for (const r of valid) {
@@ -171,6 +180,7 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
 
 // Danh sách các đối tượng có thể đổi màu ở bước 5
 export function colorTargets(spec, rows) {
+  if (spec.id === 'rangeDot') return [];
   const data = prepareData(spec, rows, {});
   if ((spec.id === 'pie' || spec.id === 'rankBar' || spec.id === 'divBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
@@ -495,6 +505,13 @@ function runtime(DATA) {
     if (DATA.type === 'barRace' || DATA.type === 'lineRank') return [];
     if (DATA.type === 'pie') return D.items.map(function (it) { return { name: it.label, color: paint(it) }; });
     if (DATA.type === 'bar' || DATA.type === 'rankBar' || DATA.type === 'divBar') return [];
+    if (DATA.type === 'rangeDot') {
+      return [
+        { name: O.bandLabel || 'Khoảng tứ phân vị', color: T.grid, shape: 'rect' },
+        { name: O.midLabel || 'Trung vị', color: T.label, shape: 'dot' },
+        { name: O.curLabel || 'Hiện tại', color: RANGE_CUR, shape: 'tri' },
+      ];
+    }
     return D.series.map(function (s) { return { name: s.name, color: paint(s.legendObj || s) }; });
   }
 
@@ -560,7 +577,10 @@ function runtime(DATA) {
           opacity: hidden[en.name] ? 0.35 : 1,
           cursor: IX.legendToggle ? 'pointer' : 'default',
         }, g);
-        el('rect', { x: x, y: Math.round(y - LS * 0.4 - sw / 2), width: sw, height: sw, rx: 4, fill: en.color }, item);
+        var sy = Math.round(y - LS * 0.4 - sw / 2);
+        if (en.shape === 'dot') el('circle', { cx: x + sw / 2, cy: sy + sw / 2, r: sw / 2, fill: en.color }, item);
+        else if (en.shape === 'tri') el('polygon', { points: [[x + sw / 2, sy], [x + sw, sy + sw], [x, sy + sw]].map(function (q) { return q.join(','); }).join(' '), fill: en.color }, item);
+        else el('rect', { x: x, y: sy, width: sw, height: sw, rx: 4, fill: en.color }, item);
         label(en.name, { x: x + sw + 8, y: y, 'font-size': 14 }, item);
         x += itemW;
       });
@@ -1157,6 +1177,57 @@ function runtime(DATA) {
     });
   }
 
+  // Dải lịch sử: mỗi danh mục có dải (cận dưới đến cận trên), điểm tròn trung vị và tam giác giá trị hiện tại
+  var RANGE_CUR = '#C0151B';
+  function drawRangeDot(g, top) {
+    var items = D.range;
+    var bandN = O.bandLabel || 'Khoảng tứ phân vị';
+    var midN = O.midLabel || 'Trung vị';
+    var curN = O.curLabel || 'Hiện tại';
+    var vals = [];
+    items.forEach(function (it) {
+      if (!hidden[bandN]) { if (it.low !== null) vals.push(it.low); if (it.high !== null) vals.push(it.high); }
+      if (!hidden[midN] && it.mid !== null) vals.push(it.mid);
+      if (!hidden[curN] && it.cur !== null) vals.push(it.cur);
+    });
+    if (items.length === 0 || vals.length === 0) { noData(g); return; }
+    var x0 = 80;
+    var x1 = W - 30;
+    var y0 = top + 10;
+    var y1 = bottomY - 34;
+    var d = domainFor(vals, O.startAtZero !== false);
+    x0 = Math.max(x0, axisPad(d));
+    var span = d.hi - d.lo;
+    function mapY(v) { return y1 - (v - d.lo) / span * (y1 - y0); }
+    drawAxisY(g, d, x0, x1, y0, y1, false);
+    if (S.showAxes) el('line', { x1: x0, y1: y1, x2: x1, y2: y1, stroke: T.axis }, g);
+    var band = (x1 - x0) / items.length;
+    var bw = Math.min(band * 0.55, 110);
+    var NLc = String.fromCharCode(10);
+    items.forEach(function (it, i) {
+      var cx = x0 + band * (i + 0.5);
+      var tipLines = [it.label];
+      if (it.low !== null && it.high !== null) tipLines.push(bandN + ': ' + fmt(it.low, dp) + ' - ' + fmt(it.high, dp) + unit);
+      if (it.mid !== null) tipLines.push(midN + ': ' + fmt(it.mid, dp) + unit);
+      if (it.cur !== null) tipLines.push(curN + ': ' + fmt(it.cur, dp) + unit);
+      var tip = tipLines.join(NLc);
+      if (!hidden[bandN] && it.low !== null && it.high !== null) {
+        el('rect', { x: cx - bw / 2, y: mapY(it.high), width: bw, height: Math.max(1, mapY(it.low) - mapY(it.high)), fill: T.grid }, g);
+      }
+      if (!hidden[midN] && it.mid !== null) el('circle', { cx: cx, cy: mapY(it.mid), r: Math.max(6, Math.round(LS * 0.5)), fill: T.label }, g);
+      if (!hidden[curN] && it.cur !== null) {
+        var cy = mapY(it.cur);
+        var r = Math.max(8, Math.round(LS * 0.6));
+        el('polygon', { points: [[cx, cy - r], [cx + r, cy + r * 0.75], [cx - r, cy + r * 0.75]].map(function (q) { return q.join(','); }).join(' '), fill: RANGE_CUR }, g);
+        if (O.showLabels !== false) {
+          label(fmt(it.cur, dp), { x: cx + r + 6, y: cy + 5, 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: RANGE_CUR, 'data-inside': 1 }, g);
+        }
+      }
+      el('rect', { x: cx - band / 2, y: y0, width: band, height: y1 - y0, fill: 'transparent', 'data-tip': tip }, g);
+      catLabel(it.label, cx, y1 + 10 + LS, band, { 'font-size': 13 }, g);
+    });
+  }
+
   // Điểm đánh dấu theo kiểu: tròn, vuông, thoi, tam giác, ngôi sao
   function markerEl(shape, cx, cy, r, fill, stroke, parent, extra) {
     var base = Object.assign({ fill: fill, stroke: stroke, 'stroke-width': 1.5, 'pointer-events': 'none' }, extra || {});
@@ -1634,6 +1705,7 @@ function runtime(DATA) {
     else if (DATA.type === 'stackedBar') drawStacked(root, top);
     else if (DATA.type === 'stackedArea') drawStackedArea(root, top);
     else if (DATA.type === 'rankBar' || DATA.type === 'divBar') drawBar(root, top);
+    else if (DATA.type === 'rangeDot') drawRangeDot(root, top);
     else drawLine(root, top);
     if (S.description) label(S.description, { x: 30, y: H - 18, 'font-size': 12, fill: TXT || T.axis }, root);
     playIntro();

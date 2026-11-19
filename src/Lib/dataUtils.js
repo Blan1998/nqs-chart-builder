@@ -48,7 +48,7 @@ export function validateRows(spec, rows) {
   });
 
   // Trùng tên phân loại (Pie, Bar)
-  if (spec.id === 'pie' || spec.id === 'bar' || spec.id === 'rankBar' || spec.id === 'divBar') {
+  if (spec.id === 'pie' || spec.id === 'bar' || spec.id === 'rankBar' || spec.id === 'divBar' || spec.id === 'rangeDot') {
     const seen = new Map();
     rows.forEach((r, i) => {
       if (isBlank(r.category)) return;
@@ -95,6 +95,17 @@ export function validateRows(spec, rows) {
       const cat = String(r.category).trim();
       if (seenCat.has(cat)) add(i, 'category', `Danh mục "${cat}" bị trùng với dòng ${seenCat.get(cat) + 1}.`);
       else seenCat.set(cat, i);
+    });
+  }
+
+  // Dải lịch sử: cận dưới <= trung vị <= cận trên
+  if (spec.id === 'rangeDot') {
+    rows.forEach((r, i) => {
+      const lo = toNumber(r.low);
+      const mid = toNumber(r.mid);
+      const hi = toNumber(r.high);
+      if (!Number.isNaN(lo) && !Number.isNaN(hi) && lo > hi) add(i, 'low', 'Cận dưới đang lớn hơn cận trên.');
+      else if (!Number.isNaN(mid) && ((!Number.isNaN(lo) && mid < lo) || (!Number.isNaN(hi) && mid > hi))) add(i, 'mid', 'Trung vị nằm ngoài dải.');
     });
   }
 

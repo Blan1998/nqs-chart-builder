@@ -1,0 +1,111 @@
+{
+  "id": "rangeDot",
+  "label": "Dải lịch sử và giá trị hiện tại",
+  "group": "So sánh",
+  "columns": [
+    {
+      "key": "category",
+      "label": "Danh mục",
+      "type": "category",
+      "required": true,
+      "description": "Tên doanh nghiệp hoặc mã cổ phiếu",
+      "example": "FRT"
+    },
+    {
+      "key": "low",
+      "label": "Cận dưới (Q1)",
+      "type": "number",
+      "required": false,
+      "description": "Cận dưới của dải, ví dụ tứ phân vị thứ nhất. Bỏ trống nếu không có dải",
+      "example": "19"
+    },
+    {
+      "key": "mid",
+      "label": "Trung vị",
+      "type": "number",
+      "required": false,
+      "description": "Điểm tròn đen ở giữa dải. Có thể bỏ trống",
+      "example": "29"
+    },
+    {
+      "key": "high",
+      "label": "Cận trên (Q3)",
+      "type": "number",
+      "required": false,
+      "description": "Cận trên của dải, ví dụ tứ phân vị thứ ba. Bỏ trống nếu không có dải",
+      "example": "45"
+    },
+    {
+      "key": "current",
+      "label": "Hiện tại",
+      "type": "number",
+      "required": false,
+      "description": "Giá trị hiện tại, hiển thị bằng tam giác đỏ có số",
+      "example": "19.2"
+    }
+  ],
+  "options": [
+    {
+      "key": "bandLabel",
+      "label": "Tên dải (chú giải)",
+      "type": "text",
+      "default": "Khoảng tứ phân vị"
+    },
+    {
+      "key": "midLabel",
+      "label": "Tên trung vị (chú giải)",
+      "type": "text",
+      "default": "Trung vị"
+    },
+    {
+      "key": "curLabel",
+      "label": "Tên giá trị hiện tại (chú giải)",
+      "type": "text",
+      "default": "Hiện tại"
+    },
+    {
+      "key": "showLabels",
+      "label": "Hiện số của giá trị hiện tại",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showLegend",
+      "label": "Hiển thị chú giải",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "startAtZero",
+      "label": "Trục bắt đầu từ 0",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "valueUnit",
+      "label": "Đơn vị",
+      "type": "text",
+      "default": ""
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Số chữ số thập phân",
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 4
+    }
+  ],
+  "validation": [
+    "Không trùng tên danh mục",
+    "Cận dưới nhỏ hơn hoặc bằng trung vị và cận trên"
+  ],
+  "interactions": [
+    "tooltip",
+    "legendToggle"
+  ],
+  "excelSheets": {
+    "data": "Dữ liệu",
+    "guide": "Hướng dẫn"
+  }
+}

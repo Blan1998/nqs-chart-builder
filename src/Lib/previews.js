@@ -7,6 +7,13 @@ import { DEFAULT_SETTINGS } from '../components/PresentationForm.jsx';
 const PREVIEW_GRADIENT = { start: '#3B1B70', end: '#A78BFA', gradient: true, dir: 'v' };
 
 const LONG = {
+  rangeDot: [
+    { category: 'FRT', low: 19, mid: 29, high: 45, current: 19.2 },
+    { category: 'MWG', low: 17.5, mid: 19.5, high: 37, current: 9.6 },
+    { category: 'PET', low: 15.5, mid: 18.5, high: 26.5, current: 26.7 },
+    { category: 'DGW', low: 12, mid: 16.5, high: 21.5, current: 9.5 },
+    { category: 'PNJ', low: 13, mid: 14, high: 16, current: 4.4 },
+  ],
   rankBar: [
     { category: 'Dallas Mavericks', value: 8250 },
     { category: 'Oklahoma City Thunder', value: 5050 },
