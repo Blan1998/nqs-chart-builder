@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS = {
   showAxes: true,
   showGrid: true,
   showBrandLogo: true,
+  changeCol: { on: false, curId: null, baseId: null, title: 'Tăng/giảm' },
   interactions: { tooltip: true, highlight: true, legendToggle: true, zoomPan: false },
   titleColor: null,
   textColor: null,

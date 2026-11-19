@@ -171,8 +171,11 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
     const label = String(r.category).trim();
     // Thanh tăng/giảm: xanh cho giá trị dương, đỏ cho giá trị âm
     const fallback = spec.id === 'divBar' ? (n >= 0 ? DIV_POS : DIV_NEG) : spec.id === 'bar' ? defaultGrad(0) : defaultGrad(items.length);
-    const colorKey = spec.id === 'bar' ? BAR_KEY : label;
-    const p = pickBrand(brand, label, colors, colorKey, resolveColor(colors, colorKey, fallback));
+    // Cột đơn: màu riêng của danh mục > màu chung "Tất cả các cột" > màu mặc định
+    const colorKey = label;
+    const barBase = spec.id === 'bar' ? resolveColor(colors, BAR_KEY, fallback) : null;
+    const own = colors[label] && colors[label].start;
+    const p = pickBrand(brand, label, colors, colorKey, spec.id === 'bar' && !own ? barBase : resolveColor(colors, colorKey, fallback));
     items.push({ label, value: n, start: p.start, mid: p.mid, dir: p.dir, end: p.end });
   }
   return { items, pct: !!vcol.pct };
@@ -186,7 +189,8 @@ export function colorTargets(spec, rows) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));
   }
   if (spec.id === 'bar' && data.items) {
-    return [{ key: BAR_KEY, name: 'Các cột', fallback: defaultGrad(0).start, fallbackEnd: defaultGrad(0).end }];
+    return [{ key: BAR_KEY, name: 'Tất cả các cột', fallback: defaultGrad(0).start, fallbackEnd: defaultGrad(0).end }]
+      .concat(data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end })));
   }
   if (spec.id === 'lineRank' || spec.id === 'barRace') {
     return data.entities.slice(0, 12).map((e) => ({ key: e.name, name: e.name, fallback: e.start, fallbackEnd: e.end }));
@@ -222,7 +226,25 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
   const theme = themeOf(settings);
   // Cột cạnh nhau / Cột chồng có chuỗi chọn "Đường" thì vẽ bằng bộ vẽ Kết hợp (cột + đường)
   const hasLine = Array.isArray(data.series) && data.series.some((s) => s.kind === 'line');
-  // Cột đơn / thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau (thanh xếp hạng luôn ngang)
+  // Cột tăng/giảm: so sánh hai cột giá trị (kỳ này và kỳ gốc), tính phần trăm thay đổi cho từng danh mục
+  const cc = settings.changeCol;
+  if (cc && cc.on && Array.isArray(data.series)) {
+    const nameOf = (id) => { const c = spec.columns.find((x) => x.key === id); return c ? c.label : null; };
+    const sCur = data.series.find((s) => s.name === nameOf(cc.curId));
+    const sBase = data.series.find((s) => s.name === nameOf(cc.baseId));
+    if (sCur && sBase && sCur !== sBase) {
+      data.changes = {
+        title: cc.title || 'Tăng/giảm',
+        values: data.xs.map((_, i) => {
+          const a = sCur.values[i];
+          const b = sBase.values[i];
+          if (a === null || a === undefined || b === null || b === undefined || b === 0) return null;
+          return (a - b) / Math.abs(b) * 100;
+        }),
+      };
+    }
+  }
+  // Thanh xếp hạng có nhiều cột giá trị: vẽ như cột cạnh nhau (thanh xếp hạng luôn ngang)
   const rankMulti = (spec.id === 'rankBar' || spec.id === 'bar' || spec.id === 'divBar') && Array.isArray(data.series);
   const drawType = rankMulti ? 'groupedBar' : (spec.id === 'groupedBar' || spec.id === 'stackedBar') && hasLine ? 'combo' : spec.id;
   const payload = {
@@ -767,8 +789,12 @@ function runtime(DATA) {
     D.xs.forEach(function (c) { if (String(c).length > maxCat) maxCat = String(c).length; });
     // Cột ngang: chừa bên trái đủ chỗ cho tên danh mục hoặc logo (logo rộng tới 110)
     var x0 = horizontal ? Math.max(140, Math.min(300, maxCat * LS * 0.6 + 24)) : 80;
-    var x1 = horizontal ? W - 80 : W - 30 - legendW;
-    var y0 = top;
+    var chg = horizontal && D.changes ? D.changes : null;
+    var chgW = chg ? Math.max(120, Math.round(LS * 7.5)) : 0;
+    var x1 = horizontal ? W - 80 - (chg ? chgW + Math.round(DS * 3) - 50 : 0) : W - 30 - legendW;
+    // Tiêu đề cột tăng/giảm xuống dòng trong bề rộng cột, chừa chỗ phía trên khung vẽ
+    var chgLines = chg ? wrapText(chg.title, 13, true, chgW - 8, g) : null;
+    var y0 = top + (chg ? chgLines.length * (LS + 2) + 12 : 0);
     var y1 = bottomY - 34;
     var visible = D.series.filter(function (s) { return !hidden[s.name]; });
     var vals = [];
@@ -828,7 +854,28 @@ function runtime(DATA) {
         } else {
           label(cat, { x: x0 - 10, y: cyH + 5, 'text-anchor': 'end', 'font-size': 13 }, g);
         }
+        if (chg) {
+          // Cột tăng/giảm ở lề phải: mũi tên và phần trăm, xanh khi tăng, đỏ khi giảm
+          var pv = chg.values[ci];
+          var xc = W - 30 - chgW + 8;
+          if (pv !== null && pv !== undefined) {
+            var up = pv > 0.0000001;
+            var down = pv < -0.0000001;
+            var cc2 = up ? '#15803D' : down ? '#DC2626' : (TXT || T.axis);
+            var ts = Math.max(8, Math.round(DS * 0.5));
+            if (up || down) {
+              var tp = up ? [[xc + ts / 2, cyH - ts / 2], [xc + ts, cyH + ts / 2], [xc, cyH + ts / 2]] : [[xc, cyH - ts / 2], [xc + ts, cyH - ts / 2], [xc + ts / 2, cyH + ts / 2]];
+              el('polygon', { points: tp.map(function (q) { return q.join(','); }).join(' '), fill: cc2 }, g);
+            }
+            label((up ? '+' : '') + fmt(pv, 1) + '%', { x: xc + ts + 8, y: cyH + 5, 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: cc2, 'data-inside': 1 }, g);
+          }
+        }
       });
+      if (chg) {
+        chgLines.forEach(function (ln, k) {
+          label(ln, { x: W - 30 - chgW + 8, y: y0 - 8 - (chgLines.length - 1 - k) * (LS + 2), 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: TXT || T.axis, 'data-raw': 1 }, g);
+        });
+      }
     } else {
       var d = domainFor(vals, O.startAtZero !== false);
       x0 = Math.max(x0, axisPad(d));

@@ -882,3 +882,8 @@ section { margin-bottom: 4px; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .confirm-actions button { padding: 9px 18px; border-radius: 999px; border: 1px solid #dcdff0; background: #fff; font-weight: 600; cursor: pointer; }
 .confirm-actions .confirm-ok { border: none; color: #fff; background: linear-gradient(135deg, #ee7224 0%, #3b1b70 100%); }
+
+/* Hộp chọn cột tăng/giảm ở bước nhập dữ liệu */
+.change-box { margin: 0 0 12px; padding: 10px 14px; border: 1px dashed #c9cdea; border-radius: 12px; background: #fafaff; }
+.change-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: #334155; }
+.change-opts select, .change-opts input { padding: 6px 10px; border: 1px solid #dcdff0; border-radius: 8px; font: inherit; }

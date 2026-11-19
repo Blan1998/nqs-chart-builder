@@ -8,6 +8,10 @@ import { askConfirm } from '../lib/confirm.js';
 const KIND_CHARTS = ['groupedBar', 'combo', 'stackedBar'];
 
 // Bước 4: nhập dữ liệu trực tiếp. Với bảng ngang (series != null) có thêm, đổi tên, xóa cột chuỗi.
+// Chọn mặc định kỳ gốc: cột có tên kiểu "đầu năm", "cùng kỳ", "kỳ trước"...; không có thì lấy cột thứ hai
+const BASE_NAME = /đầu năm|đầu kỳ|cùng kỳ|kỳ trước|quý trước|năm trước|năm ngoái|trước đó|\bcũ\b|base|prior|previous/i;
+const CHANGE_CHARTS = ['bar', 'rankBar', 'divBar', 'groupedBar'];
+
 export default function DataStep({ spec, rows, onRowsChange, series, onSeriesChange, settings, onSettingsChange }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -333,6 +337,40 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
           : 'Nhập trực tiếp vào bảng, hoặc copy vùng dữ liệu từ Excel/Google Sheets (có thể kèm dòng tiêu đề) rồi dán (Ctrl+V) vào bất kỳ ô nào.'}
         {' '}Số thập phân dùng dấu chấm hoặc dấu phẩy. Cột có dấu * là bắt buộc.
       </p>
+
+      {wide && CHANGE_CHARTS.includes(spec.id) && series.length >= 2 && settings && onSettingsChange && (() => {
+        const cc = settings.changeCol || { on: false, curId: null, baseId: null, title: 'Tăng/giảm' };
+        const valid = (id) => series.some((s) => s.id === id);
+        const setChange = (patch) => onSettingsChange({ ...settings, changeCol: { ...cc, ...patch } });
+        const toggle = (on) => {
+          if (!on) return setChange({ on: false });
+          const base = series.find((s) => BASE_NAME.test(s.name)) || series[1];
+          const cur = series.find((s) => s.id !== base.id);
+          setChange({ on: true, curId: valid(cc.curId) ? cc.curId : cur.id, baseId: valid(cc.baseId) ? cc.baseId : base.id });
+        };
+        return (
+          <div className="change-box">
+            <label className="check-field">
+              <input type="checkbox" checked={!!cc.on} onChange={(e) => toggle(e.target.checked)} />
+              <span>Tự tính mức tăng/giảm, hiện ở lề phải biểu đồ (áp dụng khi biểu đồ vẽ ngang)</span>
+            </label>
+            {cc.on && (
+              <div className="change-opts">
+                <span>So sánh</span>
+                <select value={cc.curId || ''} onChange={(e) => setChange({ curId: e.target.value })}>
+                  {series.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <span>với kỳ gốc</span>
+                <select value={cc.baseId || ''} onChange={(e) => setChange({ baseId: e.target.value })}>
+                  {series.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <span>Tiêu đề cột</span>
+                <input type="text" value={cc.title ?? ''} onChange={(e) => setChange({ title: e.target.value })} />
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="grid-wrap">
         <table className="data-grid">
