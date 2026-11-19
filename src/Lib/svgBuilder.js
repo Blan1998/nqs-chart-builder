@@ -814,8 +814,10 @@ function runtime(DATA) {
 
       var nH = D.xs.length;
       var bandH = (y1 - y0) / nH;
-      var innerH = bandH * 0.8;
+      var innerH = bandH * 0.86;
       var bhH = innerH / Math.max(1, visible.length);
+      // Nhãn số của từng thanh không được cao hơn thanh, nếu không các số của hai thanh liền nhau đè lên nhau
+      var hbLabel = Math.max(9, Math.min(DS, Math.floor(bhH - 3)));
 
       D.xs.forEach(function (cat, ci) {
         var gy = y0 + bandH * ci + (bandH - innerH) / 2;
@@ -838,11 +840,11 @@ function runtime(DATA) {
             var onRight = v >= 0 ? !inside : inside;
             label(fmt(v, dp), {
               x: onRight ? px + 6 : px - 6,
-              y: by + bhH / 2 + 4,
+              y: by + bhH / 2 + Math.round(hbLabel * 0.35),
               'text-anchor': onRight ? 'start' : 'end',
-              'font-size': 12,
+              'font-size': hbLabel,
+              'data-raw': 1,
               fill: inside ? inkFor(colorAt(s, ci)) : (TXT || T.label),
-              'data-inside': inside ? 1 : undefined,
             }, g);
           }
         });
