@@ -460,6 +460,16 @@ function runtime(DATA) {
     return out.join(NLc);
   }
 
+  // Biểu đồ thanh ngang: lề trái vừa đủ cho tên danh mục dài nhất (hoặc logo), để tên dài nhất thẳng hàng với tiêu đề (x = 30)
+  function hLabelX0(labels) {
+    var w = 40;
+    labels.forEach(function (l) {
+      var lw = logoOf(l) ? 112 : String(l).length * LS * 0.6;
+      if (lw > w) w = lw;
+    });
+    return Math.min(330, Math.round(30 + w + 14));
+  }
+
   // Khoảng cách cố định (6px) giữa đầu cột và nhãn số, tính theo cỡ chữ số liệu: dùng cho cả cột dương lẫn cột âm
   function lblH() { return 6 + Math.round(DS * 0.75); }
 
@@ -735,7 +745,7 @@ function runtime(DATA) {
     if (items.length === 0) { noData(g); return; }
 
     var horizontal = O.orientation === 'horizontal' || DATA.type === 'rankBar' || DATA.type === 'divBar';
-    var x0 = horizontal ? 140 : 80;
+    var x0 = horizontal ? hLabelX0(items.map(function (i) { return i.label; })) : 80;
     var x1 = W - 30;
     var y0 = top;
     var y1 = bottomY - 34;
@@ -802,7 +812,7 @@ function runtime(DATA) {
     var maxCat = 0;
     D.xs.forEach(function (c) { if (String(c).length > maxCat) maxCat = String(c).length; });
     // Cột ngang: chừa bên trái đủ chỗ cho tên danh mục hoặc logo (logo rộng tới 110)
-    var x0 = horizontal ? Math.max(140, Math.min(300, maxCat * LS * 0.6 + 24)) : 80;
+    var x0 = horizontal ? hLabelX0(D.xs) : 80;
     var chg = horizontal && D.changes ? D.changes : null;
     var chgW = chg ? Math.max(120, Math.round(LS * 7.5)) : 0;
     var x1 = horizontal ? W - 80 - (chg ? chgW + Math.round(DS * 3) - 50 : 0) : W - 30 - legendW;
