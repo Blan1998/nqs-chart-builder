@@ -14,6 +14,8 @@ const DEFAULT_GRADIENTS = [
 ];
 const defaultGrad = (i) => DEFAULT_GRADIENTS[i % DEFAULT_GRADIENTS.length];
 const BAR_KEY = '__bar__';
+// Khóa màu riêng của một cột: tên chuỗi và danh mục
+export const barColorKey = (seriesName, cat) => seriesName + '::' + cat;
 // Biểu đồ cột có thêm cột giá trị: cột đầu giữ màu mặc định, cột thứ hai mặc định là gradient xanh lá
 const COL2_GRAD = { start: '#008300', end: '#1BAF7B' };
 const DIV_POS = { start: '#1747A6', end: '#1747A6' };
@@ -124,11 +126,13 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
         };
       }),
     };
-    // Cột đơn / thanh nhiều cột: màu riêng của từng danh mục áp cho chuỗi đầu tiên (kỳ chính)
-    if (['bar', 'rankBar', 'divBar'].includes(spec.id) && wideOut.series.length) {
-      const s0 = wideOut.series[0];
-      const own = xsAll.map((x) => (colors[x] && colors[x].start ? resolveColor(colors, x, { start: s0.start, end: s0.end }) : null));
-      if (own.some(Boolean)) s0.catColors = xsAll.map((x, i) => own[i] || (s0.catColors && s0.catColors[i]) || null);
+    // Màu riêng của từng cột (từng khúc với cột chồng): khóa là "tên chuỗi::danh mục", thắng màu chuỗi và màu logo
+    if (['bar', 'rankBar', 'divBar', 'combo', 'stackedBar'].includes(spec.id)) {
+      wideOut.series.forEach((sr) => {
+        if (sr.kind === 'line') return;
+        const own = xsAll.map((x) => { const k = barColorKey(sr.name, x); return colors[k] && colors[k].start ? resolveColor(colors, k, { start: sr.start, end: sr.end }) : null; });
+        if (own.some(Boolean)) sr.catColors = xsAll.map((x, i) => own[i] || (sr.catColors && sr.catColors[i]) || null);
+      });
     }
     return wideOut;
   }
@@ -194,10 +198,14 @@ export function prepareData(spec, rows, colors = {}, brand = {}, options = {}) {
 export function colorTargets(spec, rows) {
   if (spec.id === 'rangeDot') return [];
   const data = prepareData(spec, rows, {});
-  if (['bar', 'rankBar', 'divBar'].includes(spec.id) && data.series) {
-    // Nhiều cột giá trị: màu từng cột, cộng màu riêng từng danh mục (áp cho cột đầu tiên)
-    return data.series.map((s) => ({ key: s.name, name: s.name, fallback: s.start, fallbackEnd: s.end }))
-      .concat(data.xs.map((x) => ({ key: x, name: x, fallback: data.series[0].start, fallbackEnd: data.series[0].end })));
+  if (['bar', 'rankBar', 'divBar', 'combo', 'stackedBar'].includes(spec.id) && data.series) {
+    // Màu từng chuỗi, rồi màu riêng của từng cột (từng khúc) trong mỗi chuỗi dạng cột
+    const out = data.series.map((s) => ({ key: s.name, name: s.name, fallback: s.start, fallbackEnd: s.end }));
+    data.series.forEach((s) => {
+      if (s.kind === 'line') return;
+      data.xs.forEach((x) => out.push({ key: barColorKey(s.name, x), name: x, bar: true, group: s.name, fallback: s.start, fallbackEnd: s.end }));
+    });
+    return out;
   }
   if ((spec.id === 'pie' || spec.id === 'rankBar' || spec.id === 'divBar') && data.items) {
     return data.items.map((it) => ({ key: it.label, name: it.label, fallback: it.start, fallbackEnd: it.end }));

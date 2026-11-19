@@ -156,7 +156,7 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
           </p>
         </div>
         <div className="chip-row">
-          {targets.map((t) => {
+          {targets.filter((t) => !t.bar).map((t) => {
             const c = colors[t.key] ?? defaultOf(t);
             const bg = c.gradient ? `linear-gradient(to top, ${c.start}, ${c.end})` : c.start;
             return (
@@ -171,6 +171,27 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
             );
           })}
         </div>
+        {[...new Set(targets.filter((t) => t.bar).map((t) => t.group))].map((grp) => (
+          <div key={grp}>
+            <p className="sub-title">{targets.some((t) => t.bar && t.group !== grp) ? 'Màu từng cột của ' + grp : 'Màu từng cột'}</p>
+            <div className="chip-row">
+              {targets.filter((t) => t.bar && t.group === grp).map((t) => {
+                const c = colors[t.key] ?? defaultOf(t);
+                const bg = c.gradient ? `linear-gradient(to top, ${c.start}, ${c.end})` : c.start;
+                return (
+                  <button
+                    key={t.key}
+                    className={active && t.key === active.key ? 'target selected' : 'target'}
+                    onClick={() => setSelectedKey(t.key)}
+                  >
+                    <span className="swatch" style={{ background: bg }} />
+                    <span>{t.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
         <div className="box-actions">
           <button className="reset-btn" onClick={() => onColorsChange({})}>Đặt lại màu mặc định</button>
         </div>
