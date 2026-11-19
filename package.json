@@ -11,7 +11,8 @@
     "start": "npm run build:electron && electron .",
     "dist": "node scripts/bump-version.js && vite build && npm run build:electron && electron-builder",
     "dist:mac": "vite build && npm run build:electron && electron-builder --mac --x64 --arm64",
-    "test": "node scripts/validate-specs.js && vitest run"
+    "test": "node scripts/validate-specs.js && vitest run && vitest run --config vitest.browser.config.mjs",
+    "test:browser": "vitest run --config vitest.browser.config.mjs"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.1.0",
@@ -29,6 +30,7 @@
     "electron-builder": "^25.1.8",
     "esbuild": "^0.21.5",
     "jsdom": "^25.0.1",
+    "playwright-core": "^1.65.1",
     "vite": "^5.4.11",
     "vitest": "^2.1.9",
     "wait-on": "^8.0.1"

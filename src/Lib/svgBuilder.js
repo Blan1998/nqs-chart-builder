@@ -1158,7 +1158,7 @@ function runtime(DATA) {
             'data-g': s.name,
             'data-tip': tipAll(ci, cat, true),
           }, g);
-          if (O.showLabels !== false && h > 16) {
+          if (O.showLabels !== false && h > Math.round(DS * 1.2)) {
             label(vText, {
               x: gx + bw / 2,
               y: yTop + h / 2 + 4,
@@ -1871,7 +1871,7 @@ function runtime(DATA) {
     draw();
   }
 
-  root.addEventListener('mousemove', function (e) {
+  svgRoot.addEventListener('mousemove', function (e) {
     if (drag) return;
     var raw = e.target.getAttribute ? e.target.getAttribute('data-tip') : null;
     if (raw && IX.tooltip !== false) showTip(e, raw);
