@@ -96,6 +96,29 @@ describe('Hiệu ứng và tương tác', () => {
   });
 });
 
+describe('Chuỗi "Tổng" trong cột chồng', () => {
+  const withTotal = () => draw('stackedBar', {
+    series: [{ name: 'Dài hạn', kind: 'bar' }, { name: 'Ngắn hạn', kind: 'bar' }, { name: 'Tổng nợ vay', kind: 'total' }],
+    table: [['Q1', 300, 5, 305], ['Q2', 590, 2, 592]],
+  });
+
+  it('không xếp chồng chuỗi Tổng: cột chỉ có 2 khúc và số tổng ghi trên đầu cột', () => {
+    const svg = withTotal();
+    expect(count(svg, 'rect[data-g]')).toBe(4); // 2 quý x 2 khúc
+    expect(count(svg, 'rect[data-g="Tổng nợ vay"]')).toBe(0);
+    expect(texts(svg)).toContain('305');
+    expect(texts(svg)).toContain('592');
+  });
+
+  it('chú giải không có mục Tổng; tooltip vẫn có dòng Tổng', () => {
+    const svg = withTotal();
+    const legend = [...parse(svg).querySelectorAll('[data-legend]')].map((e) => e.getAttribute('data-legend'));
+    expect(legend).toEqual(['Dài hạn', 'Ngắn hạn']);
+    const tips = [...parse(svg).querySelectorAll('[data-tip]')].map((e) => e.getAttribute('data-tip'));
+    expect(tips.some((t) => t.includes('Tổng nợ vay: 305'))).toBe(true);
+  });
+});
+
 describe('Cột tăng/giảm ở lề phải', () => {
   const withChange = () => draw('bar', {
     series: [{ name: 'Cuối kỳ' }, { name: 'Đầu năm' }],
@@ -106,8 +129,8 @@ describe('Cột tăng/giảm ở lề phải', () => {
 
   it('hiện % tăng (có dấu +) và % giảm', () => {
     const t = texts(withChange());
-    expect(t.some((x) => /^\+20,0%$/.test(x))).toBe(true);
-    expect(t.some((x) => /^-10,0%$/.test(x))).toBe(true);
+    expect(t.some((x) => /^\+20%$/.test(x))).toBe(true);
+    expect(t.some((x) => /^-10%$/.test(x))).toBe(true);
   });
 
   it('hiện tiêu đề cột', () => {
@@ -129,7 +152,7 @@ describe('Dải lịch sử', () => {
     // 3 tam giác trong biểu đồ + 1 trong chú giải
     expect(count(svg, 'polygon')).toBe(4);
     expect(texts(svg)).toContain('19,2');
-    expect(texts(svg)).toContain('12,0');
+    expect(texts(svg)).toContain('12');
   });
 
   it('tên chú giải đổi được', () => {
@@ -176,5 +199,33 @@ describe('Biểu đồ đường nhiều mốc', () => {
     const t = texts(draw('line', { table: many() }));
     expect(t).toContain('T1');
     expect(t).toContain('T40');
+  });
+});
+
+describe('Giữ nguyên số, không làm tròn', () => {
+  it('số liệu hiện đúng như nhập dù đặt 0 chữ số thập phân; tổng cộng không bị nhiễu', () => {
+    const svg = draw('stackedBar', {
+      series: [{ name: 'Dài hạn', kind: 'bar' }, { name: 'Ngắn hạn', kind: 'bar' }],
+      table: [['Q1', 303.37, 1.05], ['Q2', 588.98, 2.1], ['Q3', 89.75, 0]],
+      options: { decimalPlaces: 0 },
+    });
+    const t = texts(svg);
+    expect(t).toContain('303,37');
+    expect(t).toContain('588,98');
+    expect(t).toContain('304,42'); // tổng 303,37 + 1,05
+    expect(t).toContain('591,08'); // tổng 588,98 + 2,1
+    expect(t).toContain('89,75');
+  });
+});
+
+describe('Số thập phân thừa', () => {
+  it('bỏ phần thập phân chỉ toàn số 0, giữ phần có nghĩa', () => {
+    const svg = draw('bar', { table: [['A', 390], ['B', 590.8], ['C', 0]], options: { decimalPlaces: 1 } });
+    const t = texts(svg);
+    expect(t).toContain('390');
+    expect(t).toContain('590,8');
+    expect(t).toContain('0');
+    expect(t).not.toContain('390,0');
+    expect(t).not.toContain('0,0');
   });
 });

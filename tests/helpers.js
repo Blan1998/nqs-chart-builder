@@ -19,7 +19,7 @@ export function build(id, { series, table, settings = {}, options = {}, colors =
     if (series) defs.forEach((d, i) => { o[d.id] = r[i + 1] === null || r[i + 1] === undefined ? '' : String(r[i + 1]); });
     return o;
   });
-  return { spec, rows, settings: { ...DEFAULT_SETTINGS, ...settings }, options: { ...defaultOptions(id), ...options }, colors, defs };
+  return { spec, rows, settings: { ...DEFAULT_SETTINGS, height: 1000, ...settings }, options: { ...defaultOptions(id), ...options }, colors, defs };
 }
 
 export const SAMPLES = {
@@ -39,7 +39,7 @@ export function buildRange() {
   const base = CHART_SPECS.rangeDot;
   const keys = base.columns.map((c) => c.key);
   const rows = SAMPLES.rangeDot.table.map((r) => Object.fromEntries(keys.map((k, i) => [k, r[i] === null ? '' : String(r[i])])));
-  return { spec: base, rows, settings: { ...DEFAULT_SETTINGS }, options: defaultOptions('rangeDot'), colors: {} };
+  return { spec: base, rows, settings: { ...DEFAULT_SETTINGS, height: 1000 }, options: defaultOptions('rangeDot'), colors: {} };
 }
 
 export function buildSample(id, extra = {}) {

@@ -62,7 +62,7 @@
     },
     {
       "key": "decimalPlaces",
-      "label": "Số chữ số thập phân",
+      "label": "Làm tròn phần trăm (số chữ số thập phân)",
       "type": "number",
       "default": 0,
       "min": 0,

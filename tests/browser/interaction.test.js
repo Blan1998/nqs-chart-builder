@@ -81,6 +81,17 @@ describe.skipIf(!browserPath)('Tương tác trên trình duyệt thật', () => 
     } finally { await desk.close(); await mob.close(); }
   }, 30000);
 
+  it('điện thoại: nhãn trục X xoay nghiêng không bị cắt ở đáy', async () => {
+    const labels = ['03/2024', '04/2024', '01/2025', '02/2025', '03/2025', '04/2025', '01/2026', '02/2026', '03/2026'];
+    const built = buildSample('bar', { table: labels.map((l, i) => [l, 1600 - i * 100]), settings: { width: 1000, height: 1000 } });
+    const mob = await openChart(browser, built, { viewport: { width: 375, height: 500 }, wait: 1800 });
+    try {
+      const boxes = await readTexts(mob.page);
+      const out = boxes.filter((b) => b.y1 > mob.H + 1 || b.x0 < -1).map((b) => b.text);
+      expect(out).toEqual([]);
+    } finally { await mob.close(); }
+  }, 30000);
+
   it('hiệu ứng: cột bắt đầu trong suốt rồi hiện đầy đủ sau khi mọc lên', async () => {
     const c = await openChart(browser, buildSample('bar', { settings: { width: 800, height: 500 } }), { wait: 0 });
     try {

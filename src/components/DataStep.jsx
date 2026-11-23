@@ -402,6 +402,7 @@ export default function DataStep({ spec, rows, onRowsChange, series, onSeriesCha
                         <select value={s.kind ?? 'bar'} onChange={(e) => changeKind(s.id, e.target.value)}>
                           <option value="bar">Cột</option>
                           <option value="line">Đường</option>
+                          {spec.id === 'stackedBar' && <option value="total" title="Không vẽ cột, chỉ ghi số tổng trên đầu cột chồng">Tổng (ghi trên đầu cột)</option>}
                         </select>
                       )}
                       <select value={s.pct ? 'pct' : 'num'} onChange={(e) => changePct(s.id, e.target.value === 'pct')}>

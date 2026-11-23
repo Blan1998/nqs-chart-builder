@@ -200,8 +200,9 @@ export function colorTargets(spec, rows) {
   const data = prepareData(spec, rows, {});
   if (['bar', 'rankBar', 'divBar', 'combo', 'stackedBar'].includes(spec.id) && data.series) {
     // Màu từng chuỗi, rồi màu riêng của từng cột (từng khúc) trong mỗi chuỗi dạng cột
-    const out = data.series.map((s) => ({ key: s.name, name: s.name, fallback: s.start, fallbackEnd: s.end }));
-    data.series.forEach((s) => {
+    const real = data.series.filter((s) => s.kind !== 'total');
+    const out = real.map((s) => ({ key: s.name, name: s.name, fallback: s.start, fallbackEnd: s.end }));
+    real.forEach((s) => {
       if (s.kind === 'line') return;
       data.xs.forEach((x) => out.push({ key: barColorKey(s.name, x), name: x, bar: true, group: s.name, fallback: s.start, fallbackEnd: s.end }));
     });
@@ -237,7 +238,15 @@ export function nqsUrl(date, filename) {
   return `https://nqs.1cdn.vn/${y}/${m}/${d}/${filename}.svg`;
 }
 
-export function embedCode(url) {
+// Có kích thước biểu đồ thì khung nhúng tự co theo bề rộng bài viết và giữ đúng tỉ lệ (không bị cắt đáy)
+export function embedCode(url, width, height) {
+  const w = Number(width);
+  const h = Number(height);
+  if (w > 0 && h > 0) {
+    // Giữ tỉ lệ bằng padding-bottom (hệ thống bài viết hay xóa aspect-ratio); cao ÷ rộng × 100
+    const pct = Math.round(h / w * 10000) / 100;
+    return `<figure style="margin:0"><div style="position:relative;width:100%;max-width:${w}px;padding-bottom:${pct}%"><object type="image/svg+xml" data="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"></object></div></figure>`;
+  }
   return `<object type="image/svg+xml" data="${url}"></object>`;
 }
 
@@ -273,7 +282,8 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
     type: drawType,
     settings: {
       width: Number(settings.width),
-      height: Number(settings.height),
+      height: Number(settings.height) > 0 ? Math.min(3000, Math.max(300, Number(settings.height))) : 1000,
+      autoHeight: false,
       title: settings.title || '',
       subtitle: settings.subtitle || '',
       description: settings.description ?? DEFAULT_DESCRIPTION,
@@ -304,7 +314,41 @@ function themeOf(settings) {
   return settings.bgColor ? { ...base, background: settings.bgColor } : base;
 }
 
+// Chiều cao thực của biểu đồ: người dùng nhập thì dùng số đó, để trống thì đo bằng cách vẽ thử (tự dãn đủ nội dung)
+export function resolveHeight(spec, settings, options, rows, colors = {}, logos = {}, brand = {}) {
+  const given = Number(settings.height);
+  if (given > 0) return Math.min(3000, Math.max(300, given));
+  const fallback = Math.round(Number(settings.width) || 1000);
+  if (typeof document === 'undefined') return fallback;
+  const payload = buildPayload(spec, { ...settings, height: 1000 }, options, rows, colors, logos, brand);
+  payload.settings.autoHeight = true;
+  const w = payload.settings.width;
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;left:-100000px;top:0;width:' + w + 'px;height:1000px;overflow:hidden';
+  host.innerHTML = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' 1000" width="' + w + '" height="1000">',
+    '<g id="chart"></g>',
+    '<g id="tip" visibility="hidden"><rect id="tip-bg" width="10" height="10"/><text id="tip-text"></text></g>',
+    '</svg>',
+  ].join('');
+  document.body.appendChild(host);
+  let h = fallback;
+  try {
+    runtime(Object.assign(JSON.parse(JSON.stringify(payload)), { isStatic: true }));
+    const vb = host.querySelector('svg').getAttribute('viewBox').split(' ');
+    h = Math.round(Number(vb[3])) || fallback;
+  } catch (e) {
+    h = fallback;
+  } finally {
+    document.body.removeChild(host);
+  }
+  return h;
+}
+
 export function buildSvgDocument(spec, settings, options, rows, colors = {}, logos = {}, brand = {}) {
+  if (!(Number(settings.height) > 0)) {
+    settings = { ...settings, height: resolveHeight(spec, settings, options, rows, colors, logos, brand) };
+  }
   const payload = buildPayload(spec, settings, options, rows, colors, logos, brand);
   const theme = themeOf(settings);
   // Escape để dữ liệu không thể đóng thẻ script
@@ -443,9 +487,32 @@ function runtime(DATA) {
     return L > 0.62 ? '#1E293B' : '#FFFFFF';
   }
 
-  function fmt(v, d) {
+  // Số liệu gốc: hiện đúng như đã nhập, không làm tròn (chỉ loại bỏ nhiễu dấu phẩy động khi cộng/trừ)
+  function fmt(v) {
     var n = Number(v);
-    // Tránh hiện "-0" (số âm rất nhỏ hoặc -0 sau khi làm tròn)
+    if (!isFinite(n)) return String(v);
+    n = parseFloat(n.toPrecision(12));
+    if (n === 0) n = 0;
+    return n.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 10 });
+  }
+
+  // Cỡ chữ số nằm trong cột: giữ cỡ số liệu, nhưng thu nhỏ nếu chữ rộng hơn cột (tối thiểu 9)
+  function fitFs(txt, w) {
+    var need = String(txt).length * DS * 0.6;
+    if (need <= w - 8) return DS;
+    return Math.max(9, Math.floor((w - 8) / (String(txt).length * 0.6)));
+  }
+
+  // Số tính ra (phần trăm, tỷ trọng, tăng/giảm): làm tròn theo d chữ số, bỏ số 0 thừa (20,0 -> 20)
+  function fmtR(v, d) {
+    var n = Number(v);
+    if (Math.abs(n) < Math.pow(10, -(d || 0)) / 2) n = 0;
+    return n.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: d });
+  }
+
+  // Số trên trục: giữ cố định số chữ số thập phân để các mốc đều nhau (0,5 / 1,0 / 1,5)
+  function fmtFix(v, d) {
+    var n = Number(v);
     if (Math.abs(n) < Math.pow(10, -(d || 0)) / 2) n = 0;
     return n.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
@@ -456,13 +523,13 @@ function runtime(DATA) {
     var NLc = String.fromCharCode(10);
     var sers = D.series.filter(function (s) { return !hidden[s.name]; });
     var total = 0;
-    sers.forEach(function (s) { var v = s.values[ci]; if (v !== null && v !== undefined && v > 0) total += v; });
+    sers.forEach(function (s) { var v = s.values[ci]; if (s.kind !== 'total' && v !== null && v !== undefined && v > 0) total += v; });
     var out = [String(cat)];
     sers.forEach(function (s) {
       var v = s.values[ci];
       if (v === null || v === undefined) return;
       var txt = fmt(v, dp) + (s.pct ? '%' : unit);
-      if (withShare && O.percent && total > 0 && v > 0) txt += ' (' + fmt(v / total * 100, dp) + '%)';
+      if (withShare && O.percent && total > 0 && v > 0) txt += ' (' + fmtR(v / total * 100, dp) + '%)';
       out.push(s.name + ': ' + txt);
     });
     return out.join(NLc);
@@ -493,7 +560,7 @@ function runtime(DATA) {
   function axisPad(d) {
     var longest = 0;
     ticksOf(d).forEach(function (t) {
-      var len = fmt(t, decOf(d.step)).length;
+      var len = fmtFix(t, decOf(d.step)).length;
       if (len > longest) longest = len;
     });
     return Math.max(80, Math.ceil(longest * DS * 0.6 + 20));
@@ -566,7 +633,7 @@ function runtime(DATA) {
         { name: O.curLabel || 'Hiện tại', color: RANGE_CUR, shape: 'tri' },
       ];
     }
-    return D.series.map(function (s) { return { name: s.name, color: paint(s.legendObj || s) }; });
+    return D.series.filter(function (s) { return s.kind !== 'total'; }).map(function (s) { return { name: s.name, color: paint(s.legendObj || s) }; });
   }
 
   function wrapText(str, size, bold, maxW, parent) {
@@ -664,8 +731,8 @@ function runtime(DATA) {
         else el('line', { x1: x0, y1: p, x2: x1, y2: p, stroke: T.grid, 'stroke-dasharray': '4 4' }, g);
       }
       if (S.showAxes) {
-        if (horizontal) label(fmt(t, decOf(d.step)), { x: p, y: y1 + 20, 'text-anchor': 'middle', 'font-size': 12, fill: TXT || T.axis }, g);
-        else label(fmt(t, decOf(d.step)), { x: x0 - 8, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
+        if (horizontal) label(fmtFix(t, decOf(d.step)), { x: p, y: y1 + 20, 'text-anchor': 'middle', 'font-size': 12, fill: TXT || T.axis }, g);
+        else label(fmtFix(t, decOf(d.step)), { x: x0 - 8, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
       }
     });
   }
@@ -690,7 +757,7 @@ function runtime(DATA) {
         var off = O.highlightCategory === it.label ? 14 : 0;
         var ox = off * Math.cos(mid);
         var oy = off * Math.sin(mid);
-        var tipRaw = it.label + '\n' + fmt(it.value, dpOf(it.value)) + '\n' + fmt(frac * 100, 1) + '%';
+        var tipRaw = it.label + '\n' + fmt(it.value, dpOf(it.value)) + '\n' + fmtR(frac * 100, 1) + '%';
         var attrs = { fill: paint(it), stroke: T.background, 'stroke-width': 2, 'data-g': it.label, 'data-tip': tipRaw };
         if (items.length === 1) {
           el('circle', Object.assign({ cx: cx, cy: cy, r: r }, attrs), g);
@@ -716,7 +783,7 @@ function runtime(DATA) {
         }
         if (O.showLabels !== false && frac > 0.04) {
           var lr = r * 0.62;
-          var txt = O.showAs === 'value' ? fmt(it.value, dpOf(it.value)) + (D.pct ? '%' : '') : fmt(frac * 100, 1) + '%';
+          var txt = O.showAs === 'value' ? fmt(it.value, dpOf(it.value)) + (D.pct ? '%' : '') : fmtR(frac * 100, 1) + '%';
           label(txt, {
             x: cx + ox + lr * Math.cos(mid),
             y: cy + oy + lr * Math.sin(mid),
@@ -756,7 +823,7 @@ function runtime(DATA) {
     var x0 = horizontal ? hLabelX0(items.map(function (i) { return i.label; })) : 80;
     var x1 = W - 30;
     var y0 = top;
-    var y1 = bottomY - 34;
+    var y1 = bottomY - 34 - (horizontal ? 0 : rotExtra(items.map(function (i) { return i.label; }), W - 110));
     var d = domainFor(items.map(function (i) { return i.value; }), O.startAtZero !== false);
     if (!horizontal) x0 = Math.max(x0, axisPad(d));
     var span = d.hi - d.lo;
@@ -804,7 +871,8 @@ function runtime(DATA) {
             x: cx0 + bw / 2,
             y: it.value >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()),
             'text-anchor': 'middle',
-            'font-size': 13,
+            'font-size': O.labelInside ? fitFs(fmt(it.value, dp) + (D.pct ? '%' : unit), bw) : 13,
+            'data-raw': O.labelInside ? 1 : undefined,
             fill: O.labelInside ? inkFor(it) : (TXT || T.label),
             'data-inside': O.labelInside ? 1 : undefined,
           }, g);
@@ -827,7 +895,7 @@ function runtime(DATA) {
     // Tiêu đề cột tăng/giảm xuống dòng trong bề rộng cột, chừa chỗ phía trên khung vẽ
     var chgLines = chg ? wrapText(chg.title, 13, true, chgW - 8, g) : null;
     var y0 = top + (chg ? chgLines.length * (LS + 2) + 12 : 0);
-    var y1 = bottomY - 34;
+    var y1 = bottomY - 34 - (horizontal ? 0 : rotExtra(D.xs, x1 - x0));
     var visible = D.series.filter(function (s) { return !hidden[s.name]; });
     var vals = [];
     visible.forEach(function (s) {
@@ -901,7 +969,7 @@ function runtime(DATA) {
               var tp = up ? [[xc + ts / 2, cyH - ts / 2], [xc + ts, cyH + ts / 2], [xc, cyH + ts / 2]] : [[xc, cyH - ts / 2], [xc + ts, cyH - ts / 2], [xc + ts / 2, cyH + ts / 2]];
               el('polygon', { points: tp.map(function (q) { return q.join(','); }).join(' '), fill: cc2 }, g);
             }
-            label((up ? '+' : '') + fmt(pv, 1) + '%', { x: xc + ts + 8, y: cyH + 5, 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: cc2, 'data-inside': 1 }, g);
+            label((up ? '+' : '') + fmtR(pv, 1) + '%', { x: xc + ts + 8, y: cyH + 5, 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: cc2, 'data-inside': 1 }, g);
           }
         }
       });
@@ -941,10 +1009,10 @@ function runtime(DATA) {
             'data-tip': tipAll(ci, cat),
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
-            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': 12, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
+            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': O.labelInside ? fitFs(fmt(v, dp), bw) : 12, 'data-raw': O.labelInside ? 1 : undefined, fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
         });
-        catLabel(cat, x0 + band * ci + band / 2, y1 + 20, band, { 'font-size': 13 }, g);
+        catLabel(cat, x0 + band * ci + band / 2, y1 + 10 + LS, band, { 'font-size': 13 }, g);
       });
     }
 
@@ -974,7 +1042,7 @@ function runtime(DATA) {
       if (rotateX) y1 = Math.max(top + 120, bottomY - 20 - Math.ceil(xEst * 0.574 + xFs * 0.82) - 8);
     }
     var visible = D.series.filter(function (s) { return !hidden[s.name]; });
-    var bars = visible.filter(function (s) { return s.kind !== 'line'; });
+    var bars = visible.filter(function (s) { return s.kind !== 'line' && s.kind !== 'total'; });
     var lines = visible.filter(function (s) { return s.kind === 'line'; });
     var bVals = [];
     var lVals = [];
@@ -1006,11 +1074,11 @@ function runtime(DATA) {
       ticksOf(lft).forEach(function (t) {
         var p = mapL(t);
         if (S.showGrid) el('line', { x1: x0, y1: p, x2: x1, y2: p, stroke: T.grid, 'stroke-dasharray': '4 4' }, g);
-        if (S.showAxes) label(fmt(t, decOf(lft.step)), { x: x0 - 8, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
+        if (S.showAxes) label(fmtFix(t, decOf(lft.step)), { x: x0 - 8, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
       });
       if (S.showAxes && dr) {
         ticksOf(rgt).forEach(function (t) {
-          label(fmt(t, decOf(rgt.step)), { x: x1 + 8, y: mapR(t) + 4, 'text-anchor': 'start', 'font-size': 12, fill: TXT || T.axis }, g);
+          label(fmtFix(t, decOf(rgt.step)), { x: x1 + 8, y: mapR(t) + 4, 'text-anchor': 'start', 'font-size': 12, fill: TXT || T.axis }, g);
         });
       }
       if (S.showAxes) {
@@ -1043,7 +1111,7 @@ function runtime(DATA) {
           }, true, v >= 0, g);
           if (O.showLabels !== false) {
             CB.push(boxOf(fmt(v, dp), bx + bw / 2, v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), DS));
-            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 'bold', fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
+            label(fmt(v, dp), { x: bx + bw / 2, y: v >= 0 ? (O.labelInside ? py + lblH() : py - 6) : (O.labelInside ? py - 6 : py + lblH()), 'text-anchor': 'middle', 'font-size': O.labelInside ? fitFs(fmt(v, dp), bw) : 11, 'data-raw': O.labelInside ? 1 : undefined, 'font-weight': 'bold', fill: O.labelInside ? inkFor(colorAt(s, ci)) : (TXT || T.label), 'data-inside': O.labelInside ? 1 : undefined }, g);
           }
         });
       });
@@ -1104,8 +1172,11 @@ function runtime(DATA) {
     var x0 = 80;
     var x1 = W - 30 - legendW;
     var y0 = top + 10;
-    var y1 = bottomY - 34;
-    var visible = D.series.filter(function (s) { return !hidden[s.name]; });
+    var y1 = bottomY - 34 - rotExtra(D.xs, W - 110);
+    // Chuỗi dạng "Tổng" không được xếp chồng: chỉ dùng làm số tổng ghi trên đầu cột
+    var visible = D.series.filter(function (s) { return !hidden[s.name] && s.kind !== 'total'; });
+    var totalSer = D.series.filter(function (s) { return s.kind === 'total'; })[0];
+    var anyHidden = D.series.some(function (s) { return s.kind !== 'total' && hidden[s.name]; });
     var n = D.xs.length;
     var pct = !!O.percent;
     var totals = D.xs.map(function (_, ci) {
@@ -1148,7 +1219,7 @@ function runtime(DATA) {
           cum += share;
           var yTop = mapY(cum);
           var h = mapY(bottom) - yTop;
-          var vText = pct ? fmt(v / total * 100, dp) + '%' : fmt(v, dp) + (s.pct ? '%' : unit);
+          var vText = pct ? fmtR(v / total * 100, dp) + '%' : fmt(v, dp) + (s.pct ? '%' : unit);
           el('rect', {
             x: gx,
             y: yTop,
@@ -1159,11 +1230,13 @@ function runtime(DATA) {
             'data-tip': tipAll(ci, cat, true),
           }, g);
           if (O.showLabels !== false && h > Math.round(DS * 1.2)) {
+            var vfs = fitFs(vText, bw);
             label(vText, {
               x: gx + bw / 2,
-              y: yTop + h / 2 + 4,
+              y: yTop + h / 2 + Math.round(vfs * 0.33),
               'text-anchor': 'middle',
-              'font-size': 11,
+              'font-size': vfs,
+              'data-raw': 1,
               'font-weight': 600,
               fill: inkFor(colorAt(s, ci)),
               'data-inside': 1,
@@ -1172,14 +1245,15 @@ function runtime(DATA) {
           }
         });
         if (!pct && O.showLabels !== false) {
-          label(fmt(total, dp), { x: gx + bw / 2, y: mapY(total) - 6, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600 }, g);
+          var shown = totalSer && !anyHidden && totalSer.values[ci] !== null && totalSer.values[ci] !== undefined ? totalSer.values[ci] : total;
+          label(fmt(shown, dp) + (totalSer && totalSer.pct && !anyHidden ? '%' : ''), { x: gx + bw / 2, y: mapY(total) - 6, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600 }, g);
         }
-        catLabel(cat, gx + bw / 2, y1 + 20, band, { 'font-size': 13 }, g);
+        catLabel(cat, gx + bw / 2, y1 + 10 + LS, band, { 'font-size': 13 }, g);
       });
     }
 
     if (showLegend) {
-      drawLegend(g, W - legendW + 10, top + 10, D.series.map(function (s) {
+      drawLegend(g, W - legendW + 10, top + 10, D.series.filter(function (s) { return s.kind !== 'total'; }).map(function (s) {
         return { name: s.name, color: paint(s.legendObj || s) };
       }));
     }
@@ -1248,7 +1322,7 @@ function runtime(DATA) {
       el('path', { d: dLine, fill: 'none', stroke: L.s.start, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'data-g': L.s.name, 'pointer-events': 'none' }, g);
       L.up.forEach(function (v, ci) {
         var raw = val(L.s, ci);
-        var vText = pct ? fmt(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + (L.s.pct ? '%' : unit);
+        var vText = pct ? fmtR(totals[ci] > 0 ? raw / totals[ci] * 100 : 0, dp) + '%' : fmt(raw, dp) + (L.s.pct ? '%' : unit);
         if (pts) el('circle', { cx: mapX(ci), cy: mapY(v), r: 4, fill: L.s.start, 'data-g': L.s.name, 'pointer-events': 'none' }, g);
         el('circle', { cx: mapX(ci), cy: mapY((L.lo[ci] + v) / 2), r: 12, fill: 'transparent', 'data-g': L.s.name, 'data-tip': tipAll(ci, D.xs[ci], true) }, g);
       });
@@ -1365,6 +1439,17 @@ function runtime(DATA) {
   }
 
   // Nhãn trục: nếu quá dài so với khoảng cách cột thì xoay nghiêng để không dính nhau
+  // Phần phải nâng đáy khung vẽ lên khi nhãn trục X bị xoay nghiêng (chữ to trên điện thoại thò xuống dưới đáy)
+  function rotExtra(labels, availW) {
+    var n = labels.length;
+    if (!n) return 0;
+    var longest = labels.reduce(function (m, c) { return logoOf(c) ? m : Math.max(m, String(c).length); }, 0);
+    var est = longest * LS * 0.62;
+    if (est <= availW / n * 0.95) return 0;
+    var need = 10 + LS + est * 0.574 + LS * 0.3;
+    return Math.max(0, Math.ceil(need - 74));
+  }
+
   function catLabel(str, x, y, band, attrs, parent) {
     var lg = logoOf(str);
     if (lg) {
@@ -1465,7 +1550,7 @@ function runtime(DATA) {
         for (var i = first; i <= last; i += step) {
           var px = mapX(i);
           if (px < x0 - 5 || px > x1 + 5) continue;
-          catLabel(xs[i], px, y1 + 20, (x1 - x0) / Math.max(1, n), { 'font-size': 12, fill: TXT || T.axis }, g);
+          catLabel(xs[i], px, y1 + 10 + LS, (x1 - x0) / Math.max(1, n), { 'font-size': 12, fill: TXT || T.axis }, g);
         }
         }
       }
@@ -1572,7 +1657,7 @@ function runtime(DATA) {
     ticksOf(d).forEach(function (tk) {
       var p = mapX(tk);
       if (S.showGrid) el('line', { x1: p, y1: y0 - 4, x2: p, y2: y1, stroke: T.grid, 'stroke-dasharray': '4 4' }, g);
-      if (S.showAxes) label(fmt(tk, decOf(d.step)), { x: p, y: y0 - 10, 'text-anchor': 'middle', 'font-size': 11, fill: TXT || T.axis }, g);
+      if (S.showAxes) label(fmtFix(tk, decOf(d.step)), { x: p, y: y0 - 10, 'text-anchor': 'middle', 'font-size': 11, fill: TXT || T.axis }, g);
     });
     var slot = (y1 - y0) / topN;
     var bh = slot * 0.8;
@@ -1664,13 +1749,13 @@ function runtime(DATA) {
       ticksOf(d).forEach(function (tk) {
         var p = y1 - (tk - d.lo) / span * (y1 - y0);
         if (S.showGrid) el('line', { x1: x0, y1: p, x2: x1, y2: p, stroke: T.grid, 'stroke-dasharray': '4 4' }, g);
-        if (S.showAxes) label(fmt(tk, decOf(d.step)), { x: x0 - 10, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
+        if (S.showAxes) label(fmtFix(tk, decOf(d.step)), { x: x0 - 10, y: p + 4, 'text-anchor': 'end', 'font-size': 12, fill: TXT || T.axis }, g);
       });
     }
     if (S.showAxes) {
       var step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((x1 - x0) / 60))));
       for (var q = 0; q < n; q += step) {
-        label(D.xs[q], { x: mapX(q), y: y1 + 20, 'text-anchor': 'middle', 'font-size': 12, fill: TXT || T.axis }, g);
+        label(D.xs[q], { x: mapX(q), y: y1 + 10 + LS, 'text-anchor': 'middle', 'font-size': 12, fill: TXT || T.axis }, g);
       }
       el('line', { x1: x0, y1: y1, x2: x1, y2: y1, stroke: T.axis }, g);
     }
@@ -1769,14 +1854,49 @@ function runtime(DATA) {
     } else go();
   }
 
+  // Chiều cao phần vẽ (từ dưới phần đầu đến chân biểu đồ) đủ chứa nội dung theo từng loại biểu đồ
+  function autoPlotH() {
+    var t = DATA.type;
+    if (t === 'pie') return Math.round(W * 0.7) + 72;
+    if (t === 'barRace' || t === 'lineRank') return Math.round(W * 0.75);
+    var horizontal = false;
+    var rows = 0;
+    var per = 0;
+    var extra = 0;
+    if (t === 'bar' || t === 'rankBar' || t === 'divBar') {
+      horizontal = O.orientation === 'horizontal' || t !== 'bar';
+      rows = D.items ? D.items.length : 0;
+      per = Math.max(40, Math.round(DS * 2.3));
+    } else if (t === 'groupedBar') {
+      horizontal = O.orientation === 'horizontal';
+      rows = D.xs ? D.xs.length : 0;
+      var ns = D.series ? D.series.length : 1;
+      per = ns * Math.max(26, Math.round(DS * 1.6)) + 16;
+      if (D.changes) extra = 60;
+    }
+    if (horizontal) return Math.max(220, rows * per + 34 + extra);
+    return Math.round(W * 0.62) + 58;
+  }
+
   function draw() {
     applyFontScale();
     while (root.firstChild) root.removeChild(root.firstChild);
     lastHL = null;
     gradN = 0;
     DEFS = el('defs', {}, root);
-    bottomY = H - (S.description ? 44 : 24) - 40;
+    var foot = (S.description ? 44 : 24) + 40;
+    bottomY = H - foot;
     var top = drawHeader(root);
+    if (S.autoHeight) {
+      // Chiều cao tự tính theo nội dung (chỉ dùng ở bước đo; bản xuất ra luôn có chiều cao cố định)
+      var wantH = Math.round(top + autoPlotH() + foot);
+      if (wantH !== H) {
+        H = wantH;
+        svgRoot.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        svgRoot.setAttribute('height', H);
+      }
+      bottomY = H - foot;
+    }
     if (DATA.type === 'pie') drawPie(root, top);
     else if (DATA.type === 'bar') drawBar(root, top);
     else if (DATA.type === 'groupedBar') drawGrouped(root, top);
@@ -1940,6 +2060,9 @@ function runtime(DATA) {
 // Ảnh tĩnh của biểu đồ (không có script), dùng cho thư viện xem trước.
 // Chạy trong tiến trình giao diện: vẽ vào một khung ẩn rồi lấy mã SVG.
 export function renderStaticSvg(spec, settings, options, rows, colors = {}) {
+  if (!(Number(settings.height) > 0)) {
+    settings = { ...settings, height: resolveHeight(spec, settings, options, rows, colors) };
+  }
   const payload = buildPayload(spec, settings, options, rows, colors);
   const theme = payload.theme;
   const w = payload.settings.width;

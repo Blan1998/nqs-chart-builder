@@ -1,6 +1,6 @@
 {
   "name": "nqs-chart-builder",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CÃ´ng cá»¥ váº½ biá»ƒu Ä‘á»“ SVG tÆ°Æ¡ng tÃ¡c cho NgÆ°á»i Quan SÃ¡t",
   "main": "dist-electron/main.js",
   "private": true,

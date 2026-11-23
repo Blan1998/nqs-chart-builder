@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { buildSvgDocument, colorTargets, slugify, nqsUrl, embedCode } from '../lib/svgBuilder.js';
+import { buildSvgDocument, resolveHeight, colorTargets, slugify, nqsUrl, embedCode } from '../lib/svgBuilder.js';
 import { PRESETS, GRADIENT_PRESETS, hexToRgb, rgbToHex, normalizeHex } from '../lib/color.js';
 import ColorPicker from './ColorPicker.jsx';
 import { normalizeKey } from '../lib/logo.js';
@@ -23,6 +23,7 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
   const [date, setDate] = useState(todayIso);
   const [fileName, setFileName] = useState(`bieu-do-${spec.id}`);
   const [message, setMessage] = useState('');
+  const [phone, setPhone] = useState(false); // xem trước ở khổ điện thoại
   const [selectedKey, setSelectedKey] = useState(null);
   const [author, setAuthor] = useState('');
   const [useUnique, setUseUnique] = useState(true);
@@ -62,9 +63,14 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
   const brandCount = Object.keys(brand).length;
 
   const targets = useMemo(() => colorTargets(spec, rows), [spec, rows]);
-  const svg = useMemo(
-    () => (valid ? buildSvgDocument(spec, settings, options, rows, colors, logos, brand) : ''),
+  // Chiều cao thực: để trống thì tự đo cho vừa nội dung; dùng chung cho bản SVG, khung xem trước và mã nhúng
+  const finalHeight = useMemo(
+    () => (valid ? resolveHeight(spec, settings, options, rows, colors, logos, brand) : Number(settings.height) || 1000),
     [valid, spec, settings, options, rows, colors, logos, brand]
+  );
+  const svg = useMemo(
+    () => (valid ? buildSvgDocument(spec, { ...settings, height: finalHeight }, options, rows, colors, logos, brand) : ''),
+    [valid, spec, settings, options, rows, colors, logos, brand, finalHeight]
   );
 
   if (!valid) {
@@ -82,7 +88,7 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
   const authorPart = slugify(author);
   const slug = [baseSlug, authorPart, useUnique ? uniqueCode : ''].filter(Boolean).join('-');
   const url = nqsUrl(date, slug);
-  const embed = embedCode(url);
+  const embed = embedCode(url, settings.width, finalHeight);
   // Không cuộn trong khung xem trước: svg dạng block để không sinh khoảng trống dưới đáy
   const previewDoc = `<!doctype html><html><head><style>html,body{margin:0;overflow:hidden;background:#fff}svg{display:block}</style></head><body>${svg}</body></html>`;
 
@@ -120,14 +126,26 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
   return (
     <div>
       <div className="preview-block">
-        <h3 className="section-title">Xem trước</h3>
+        <div className="preview-head">
+          <h3 className="section-title">Xem trước</h3>
+          <div className="device-toggle" role="group" aria-label="Thiết bị xem trước">
+            <button type="button" className={!phone ? 'on' : ''} title="Xem trên máy tính" aria-pressed={!phone} onClick={() => setPhone(false)}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></svg>
+            </button>
+            <button type="button" className={phone ? 'on' : ''} title="Xem trên điện thoại (rộng 375 px)" aria-pressed={phone} onClick={() => setPhone(true)}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></svg>
+            </button>
+          </div>
+        </div>
         <div className="svg-preview">
           <iframe
+            key={phone ? 'phone' : 'desktop'}
+            className={phone ? 'phone' : ''}
             title="Xem trước biểu đồ"
             sandbox="allow-scripts"
             scrolling="no"
             srcDoc={previewDoc}
-            style={{ aspectRatio: `${settings.width} / ${settings.height}` }}
+            style={{ aspectRatio: `${settings.width} / ${finalHeight}` }}
           />
         </div>
         <p className="hint">Rê chuột để xem tooltip, bấm chú giải để bật/tắt chuỗi.</p>

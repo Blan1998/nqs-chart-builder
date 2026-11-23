@@ -887,3 +887,10 @@ section { margin-bottom: 4px; }
 .change-box { margin: 0 0 12px; padding: 10px 14px; border: 1px dashed #c9cdea; border-radius: 12px; background: #fafaff; }
 .change-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: #334155; }
 .change-opts select, .change-opts input { padding: 6px 10px; border: 1px solid #dcdff0; border-radius: 8px; font: inherit; }
+
+/* Xem trước: chuyển giữa máy tính và điện thoại */
+.preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.device-toggle { display: inline-flex; border: 1px solid var(--grid); border-radius: 10px; overflow: hidden; background: #fff; }
+.device-toggle button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 34px; padding: 0; border: 0; background: transparent; color: #64748b; cursor: pointer; }
+.device-toggle button.on { background: #ede9f7; color: var(--main-end, #4a2a8a); }
+.preview-block .svg-preview iframe.phone { width: 375px; max-width: 100%; display: block; margin: 0 auto; }

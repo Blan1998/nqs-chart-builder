@@ -121,3 +121,27 @@ describe.skipIf(!browserPath)('Bố cục trên trình duyệt thật', () => {
     } finally { await c.close(); }
   }, 30000);
 });
+
+describe.skipIf(!browserPath)('Số trong cột', () => {
+  let browser;
+  beforeAll(async () => { browser = await launch(); }, 60000);
+  afterAll(async () => { if (browser) await browser.close(); });
+
+  it('cột chồng: số dài nằm gọn trong bề rộng cột', async () => {
+    const c = await openChart(browser, buildSample('stackedBar', {
+      series: [{ name: 'Dài hạn', kind: 'bar' }, { name: 'Ngắn hạn', kind: 'bar' }],
+      table: many(9, (i) => ['Q' + (i + 1) + '/2025', 588.98 + i * 0.01, 303.37 + i]),
+      settings: { width: 1000, height: 700, dataSize: 22 },
+    }));
+    try {
+      const r = await c.page.evaluate(() => {
+        const svg = document.documentElement;
+        const bars = [...svg.querySelectorAll('rect[data-g]')].map((b) => b.getBoundingClientRect());
+        const bw = Math.min(...bars.map((b) => b.width));
+        const wide = [...svg.querySelectorAll('text[data-inside]')].map((t) => t.getBoundingClientRect().width).filter((w) => w > bw);
+        return { bw, wide };
+      });
+      expect(r.wide).toEqual([]);
+    } finally { await c.close(); }
+  }, 30000);
+});
