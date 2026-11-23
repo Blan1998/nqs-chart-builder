@@ -86,7 +86,7 @@ describe.skipIf(!browserPath)('Bố cục trên trình duyệt thật', () => {
     } finally { await c.close(); }
   }, 30000);
 
-  it('biểu đồ ngang: tên danh mục dài nhất thẳng hàng với tiêu đề (lề trái 30)', async () => {
+  it('biểu đồ ngang: tên danh mục dài nhất thẳng hàng với tiêu đề (lề trái 8)', async () => {
     const c = await openChart(browser, buildSample('bar', {
       table: [['HPG', 4035], ['MSN', 3338], ['MWG', 2080]],
       options: { orientation: 'horizontal' },
@@ -96,7 +96,7 @@ describe.skipIf(!browserPath)('Bố cục trên trình duyệt thật', () => {
       const boxes = await readTexts(c.page);
       const title = boxes.find((b) => b.text === 'Giá trị mua ròng');
       const cat = boxes.find((b) => b.text === 'HPG');
-      expect(Math.abs(title.x0 - 30)).toBeLessThan(4);
+      expect(Math.abs(title.x0 - 8)).toBeLessThan(4);
       expect(Math.abs(cat.x0 - title.x0)).toBeLessThan(14);
     } finally { await c.close(); }
   }, 30000);
@@ -117,7 +117,7 @@ describe.skipIf(!browserPath)('Bố cục trên trình duyệt thật', () => {
         return { imgLeft: (img.left - r0.left) * sx, imgRight: (img.right - r0.left) * sx, titleRight: maxRight };
       });
       expect(r.imgLeft).toBeGreaterThan(r.titleRight);
-      expect(r.imgRight).toBeLessThanOrEqual(1000 - 25);
+      expect(r.imgRight).toBeLessThanOrEqual(1000);
     } finally { await c.close(); }
   }, 30000);
 });

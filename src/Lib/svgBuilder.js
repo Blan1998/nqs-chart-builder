@@ -245,7 +245,7 @@ export function embedCode(url, width, height) {
   if (w > 0 && h > 0) {
     // Giữ tỉ lệ bằng padding-bottom (hệ thống bài viết hay xóa aspect-ratio); cao ÷ rộng × 100
     const pct = Math.round(h / w * 10000) / 100;
-    return `<figure style="margin:0"><div style="position:relative;width:100%;max-width:${w}px;padding-bottom:${pct}%"><object type="image/svg+xml" data="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"></object></div></figure>`;
+    return `<figure style="margin:0 0 16px"><div style="position:relative;width:100%;max-width:${w}px;padding-bottom:${pct}%;overflow:hidden"><object type="image/svg+xml" data="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"></object></div></figure>`;
   }
   return `<object type="image/svg+xml" data="${url}"></object>`;
 }
@@ -284,6 +284,7 @@ export function buildPayload(spec, settings, options, rows, colors = {}, logos =
       width: Number(settings.width),
       height: Number(settings.height) > 0 ? Math.min(3000, Math.max(300, Number(settings.height))) : 1000,
       autoHeight: false,
+      pad: settings.pad === null || settings.pad === undefined || settings.pad === '' || Number.isNaN(Number(settings.pad)) ? 2 : Math.min(60, Math.max(0, Number(settings.pad))),
       title: settings.title || '',
       subtitle: settings.subtitle || '',
       description: settings.description ?? DEFAULT_DESCRIPTION,
@@ -404,6 +405,9 @@ function runtime(DATA) {
   var T = DATA.theme;
   var D = DATA.data;
   var W = S.width;
+  var BOTTOM_GAP = 48; // khoảng trắng dưới đáy biểu đồ: đoạn văn liền sau không bị dính vào dòng nguồn
+  var PADL = (S.pad != null ? S.pad : 2) + 6; // lề trái lớn hơn lề phải một chút
+  var PAD = S.pad != null ? S.pad : 2; // lề trái/phải (px) của biểu đồ, chỉnh để chữ thẳng hàng với đoạn văn trong bài viết
   var H = S.height;
   var IX = S.interactions || {};
   var root = document.getElementById('chart');
@@ -496,11 +500,12 @@ function runtime(DATA) {
     return n.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 10 });
   }
 
-  // Cỡ chữ số nằm trong cột: giữ cỡ số liệu, nhưng thu nhỏ nếu chữ rộng hơn cột (tối thiểu 9)
+  // Cỡ chữ số nằm trong cột: giữ đúng cỡ "Số liệu" đã quy định; chỉ thu nhỏ nhẹ khi chữ rộng hơn cột,
+  // và không nhỏ hơn 80% cỡ quy định (để trên điện thoại vẫn đọc được)
   function fitFs(txt, w) {
-    var need = String(txt).length * DS * 0.6;
-    if (need <= w - 8) return DS;
-    return Math.max(9, Math.floor((w - 8) / (String(txt).length * 0.6)));
+    var len = String(txt).length;
+    if (len * DS * 0.6 <= w - 3) return DS;
+    return Math.max(Math.round(DS * 0.8), Math.floor((w - 3) / (len * 0.6)));
   }
 
   // Số tính ra (phần trăm, tỷ trọng, tăng/giảm): làm tròn theo d chữ số, bỏ số 0 thừa (20,0 -> 20)
@@ -542,7 +547,7 @@ function runtime(DATA) {
       var lw = logoOf(l) ? 112 : String(l).length * LS * 0.6;
       if (lw > w) w = lw;
     });
-    return Math.min(330, Math.round(30 + w + 14));
+    return Math.min(330, Math.round(PADL + w + 14));
   }
 
   // Khoảng cách cố định (6px) giữa đầu cột và nhãn số, tính theo cỡ chữ số liệu: dùng cho cả cột dương lẫn cột âm
@@ -665,32 +670,32 @@ function runtime(DATA) {
       var lgW = Math.round(Math.min(300, W * 0.25));
       var lgH = Math.round(lgW / S.brandLogoRatio);
       var lgY = Math.max(10, Math.round(y - TSZ * 0.35 - lgH / 2) + 12);
-      el('image', { href: S.brandLogo, x: W - 30 - lgW, y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMaxYMid meet' }, g);
+      el('image', { href: S.brandLogo, x: W - PAD - lgW, y: lgY, width: lgW, height: lgH, preserveAspectRatio: 'xMaxYMid meet' }, g);
     }
     if (S.title) {
       // Tiêu đề căn trái, rộng tối đa khoảng 2/3 biểu đồ, dài hơn thì xuống dòng
-      var tLines = wrapText(S.title, TSZ, true, Math.round(W * 0.67) - 30, g);
+      var tLines = wrapText(S.title, TSZ, true, Math.round(W * 0.67) - PAD, g);
       tLines.forEach(function (ln, li) {
-        label(ln, { x: 30, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
+        label(ln, { x: PADL, y: y, 'font-size': TSZ, 'font-weight': 'bold', fill: S.titleColor || T.label, 'data-raw': 1 }, g);
         // Dòng cuối: khoảng cách xuống dòng đơn vị gọn hơn khoảng cách giữa các dòng tiêu đề
         y += li === tLines.length - 1 ? Math.round(TSZ * 0.3 + LS * 1.1) + 12 : Math.round(TSZ * 1.2);
       });
     }
     if (S.subtitle) {
-      label(S.subtitle, { x: 30, y: y, 'font-size': 15, fill: TXT || T.axis }, g);
+      label(S.subtitle, { x: PADL, y: y, 'font-size': 15, fill: TXT || T.axis }, g);
       y += Math.round(LS * 1.0); // khoảng cách theo cỡ chữ
     }
     var entries = O.showLegend !== false ? legendEntries() : [];
     if (entries.length) {
       var fsz = LS;
       var lineH = fsz * 1.6 + 8;
-      var x = 30;
+      var x = PADL;
       y += 8 + Math.round(LS * 0.5);
       entries.forEach(function (en) {
         var sw = Math.max(14, Math.round(LS * 0.7)); // ô màu tăng theo cỡ chữ
         var itemW = sw + 8 + String(en.name).length * fsz * 0.6 + 30;
-        if (x > 30 && x + itemW > W - 30) {
-          x = 30;
+        if (x > PADL && x + itemW > W - PAD) {
+          x = PADL;
           y += lineH;
         }
         var item = el('g', {
@@ -821,7 +826,7 @@ function runtime(DATA) {
 
     var horizontal = O.orientation === 'horizontal' || DATA.type === 'rankBar' || DATA.type === 'divBar';
     var x0 = horizontal ? hLabelX0(items.map(function (i) { return i.label; })) : 80;
-    var x1 = W - 30;
+    var x1 = (horizontal ? W - PAD - 26 : W - PAD);
     var y0 = top;
     var y1 = bottomY - 34 - (horizontal ? 0 : rotExtra(items.map(function (i) { return i.label; }), W - 110));
     var d = domainFor(items.map(function (i) { return i.value; }), O.startAtZero !== false);
@@ -891,7 +896,7 @@ function runtime(DATA) {
     var x0 = horizontal ? hLabelX0(D.xs) : 80;
     var chg = horizontal && D.changes ? D.changes : null;
     var chgW = chg ? Math.max(120, Math.round(LS * 7.5)) : 0;
-    var x1 = horizontal ? W - 80 - (chg ? chgW + Math.round(DS * 3) - 50 : 0) : W - 30 - legendW;
+    var x1 = horizontal ? W - 80 - (chg ? chgW + Math.round(DS * 3) - 50 : 0) : W - PAD - legendW;
     // Tiêu đề cột tăng/giảm xuống dòng trong bề rộng cột, chừa chỗ phía trên khung vẽ
     var chgLines = chg ? wrapText(chg.title, 13, true, chgW - 8, g) : null;
     var y0 = top + (chg ? chgLines.length * (LS + 2) + 12 : 0);
@@ -959,7 +964,7 @@ function runtime(DATA) {
         if (chg) {
           // Cột tăng/giảm ở lề phải: mũi tên và phần trăm, xanh khi tăng, đỏ khi giảm
           var pv = chg.values[ci];
-          var xc = W - 30 - chgW + 8;
+          var xc = W - PAD - chgW + 8;
           if (pv !== null && pv !== undefined) {
             var up = pv > 0.0000001;
             var down = pv < -0.0000001;
@@ -975,7 +980,7 @@ function runtime(DATA) {
       });
       if (chg) {
         chgLines.forEach(function (ln, k) {
-          label(ln, { x: W - 30 - chgW + 8, y: y0 - 8 - (chgLines.length - 1 - k) * (LS + 2), 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: TXT || T.axis, 'data-raw': 1 }, g);
+          label(ln, { x: W - PAD - chgW + 8, y: y0 - 8 - (chgLines.length - 1 - k) * (LS + 2), 'font-weight': 'bold', 'text-anchor': 'start', 'font-size': 13, fill: TXT || T.axis, 'data-raw': 1 }, g);
         });
       }
     } else {
@@ -1170,7 +1175,7 @@ function runtime(DATA) {
     var showLegend = O.showLegend !== false;
     var legendW = 0;
     var x0 = 80;
-    var x1 = W - 30 - legendW;
+    var x1 = W - PAD - legendW;
     var y0 = top + 10;
     var y1 = bottomY - 34 - rotExtra(D.xs, W - 110);
     // Chuỗi dạng "Tổng" không được xếp chồng: chỉ dùng làm số tổng ghi trên đầu cột
@@ -1206,7 +1211,7 @@ function runtime(DATA) {
       if (S.showAxes) el('line', { x1: x0, y1: y1, x2: x1, y2: y1, stroke: T.axis }, g);
 
       var band = (x1 - x0) / n;
-      var bw = band * 0.6;
+      var bw = band * 0.7;
       D.xs.forEach(function (cat, ci) {
         var cum = 0;
         var total = totals[ci];
@@ -1347,7 +1352,7 @@ function runtime(DATA) {
     });
     if (items.length === 0 || vals.length === 0) { noData(g); return; }
     var x0 = 80;
-    var x1 = W - 30;
+    var x1 = W - PAD;
     var y0 = top + 10;
     var y1 = bottomY - 34;
     var d = domainFor(vals, O.startAtZero !== false);
@@ -1495,7 +1500,7 @@ function runtime(DATA) {
     var legendOn = O.showLegend !== false;
     var legendW = 0;
     var x0 = 80;
-    var x1 = W - 30 - legendW;
+    var x1 = W - PAD - 24 - legendW;
     var y0 = top;
     var y1 = bottomY - 34;
     PLOT = { x0: x0, x1: x1, y0: y0, y1: y1 };
@@ -1884,7 +1889,7 @@ function runtime(DATA) {
     lastHL = null;
     gradN = 0;
     DEFS = el('defs', {}, root);
-    var foot = (S.description ? 44 : 24) + 40;
+    var foot = (S.description ? 44 : 24) + 40 + BOTTOM_GAP;
     bottomY = H - foot;
     var top = drawHeader(root);
     if (S.autoHeight) {
@@ -1908,9 +1913,9 @@ function runtime(DATA) {
     else if (DATA.type === 'rankBar' || DATA.type === 'divBar') drawBar(root, top);
     else if (DATA.type === 'rangeDot') drawRangeDot(root, top);
     else drawLine(root, top);
-    if (S.description) label(S.description, { x: 30, y: H - 18, 'font-size': 12, fill: TXT || T.axis }, root);
+    if (S.description) label(S.description, { x: PADL, y: H - 18 - BOTTOM_GAP, 'font-size': 12, fill: TXT || T.axis }, root);
     playIntro();
-    if (zoomOn) label('Cuộn chuột để zoom, kéo để di chuyển, nhấp đúp để về mặc định', { x: W - 30, y: H - 18, 'text-anchor': 'end', 'font-size': 11, fill: TXT || T.axis }, root);
+    if (zoomOn) label('Cuộn chuột để zoom, kéo để di chuyển, nhấp đúp để về mặc định', { x: W - PAD, y: H - 18 - BOTTOM_GAP, 'text-anchor': 'end', 'font-size': 11, fill: TXT || T.axis }, root);
   }
 
   function toSvgPoint(e) {

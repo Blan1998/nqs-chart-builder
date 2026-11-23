@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { normalizeHex, hexToRgb, rgbToHex, rgbToHsv, hsvToRgb } from '../lib/color.js';
 
 const HUE_GRADIENT = 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)';
@@ -26,6 +26,8 @@ export default function ColorPicker({ value, onChange, presets, wide = false }) 
   const current = target === 'end' && value.gradient ? value.end : value.start;
   const [hsv, setHsv] = useState(() => rgbToHsv(hexToRgb(current)));
   const [hexText, setHexText] = useState(current);
+  const nativeRef = useRef(null);
+  const nativeFor = useRef('start');
 
   useEffect(() => {
     setHexText(current);
@@ -68,6 +70,24 @@ export default function ColorPicker({ value, onChange, presets, wide = false }) 
     onChange(next);
   }
 
+  // Bấm đúp vào chấm màu: mở bảng chọn màu của hệ thống cho đúng điểm đó
+  function openNative(which) {
+    nativeFor.current = which;
+    setTarget(which);
+    const el = nativeRef.current;
+    if (!el) return;
+    el.value = which === 'end' ? value.end : value.start;
+    el.click();
+  }
+
+  function onNative(hex) {
+    const h = normalizeHex(hex);
+    if (!h) return;
+    const next = nativeFor.current === 'end' ? { ...value, end: h } : { ...value, start: h };
+    if (!next.gradient) next.end = next.start;
+    onChange(next);
+  }
+
   async function pickScreen() {
     try {
       const r = await new window.EyeDropper().open();
@@ -83,6 +103,19 @@ export default function ColorPicker({ value, onChange, presets, wide = false }) 
   return (
     <div className={wide ? 'picker wide' : 'picker'}>
       <div className="picker-col">
+        <div className="gbar-wrap">
+          <div className="gbar" style={{ background: value.gradient ? `linear-gradient(to right, ${value.start}, ${value.end})` : value.start }} />
+          <button type="button" className={target === 'start' || !value.gradient ? 'gstop on' : 'gstop'} style={{ left: '0%', background: value.start }}
+            title="Bấm để chọn điểm màu này, bấm đúp để mở bảng màu"
+            onClick={() => setTarget('start')} onDoubleClick={() => openNative('start')} />
+          {value.gradient && (
+            <button type="button" className={target === 'end' ? 'gstop on' : 'gstop'} style={{ left: '100%', background: value.end }}
+              title="Bấm để chọn điểm màu này, bấm đúp để mở bảng màu"
+              onClick={() => setTarget('end')} onDoubleClick={() => openNative('end')} />
+          )}
+          <input ref={nativeRef} type="color" className="native-color" tabIndex={-1} aria-hidden="true"
+            onChange={(e) => onNative(e.target.value)} />
+        </div>
         <div
           className="sv"
           style={{ background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, ${baseHue})` }}
@@ -113,30 +146,8 @@ export default function ColorPicker({ value, onChange, presets, wide = false }) 
       <div className="picker-col">
         <label className="check-field">
           <input type="checkbox" checked={!!value.gradient} onChange={(e) => toggleGradient(e.target.checked)} />
-          <span>Dùng gradient (bắt đầu ở dưới, kết thúc ở trên)</span>
+          <span>Dùng gradient (chọn từng điểm màu ở thanh phía trên)</span>
         </label>
-
-        {value.gradient && (
-          <div className="grad-tabs">
-            <button className={value.dir !== 'h' ? 'tab on' : 'tab'} onClick={() => onChange({ ...value, dir: 'v' })}>
-              Dọc (dưới → trên)
-            </button>
-            <button className={value.dir === 'h' ? 'tab on' : 'tab'} onClick={() => onChange({ ...value, dir: 'h' })}>
-              Ngang (trái → phải)
-            </button>
-          </div>
-        )}
-
-        {value.gradient && (
-          <div className="grad-tabs">
-            <button className={target === 'start' ? 'tab on' : 'tab'} onClick={() => setTarget('start')}>
-              <span className="dot" style={{ background: value.start }} /> Bắt đầu (dưới)
-            </button>
-            <button className={target === 'end' ? 'tab on' : 'tab'} onClick={() => setTarget('end')}>
-              <span className="dot" style={{ background: value.end }} /> Kết thúc (trên)
-            </button>
-          </div>
-        )}
 
         <div className="presets">
           {presets.map((p) => (

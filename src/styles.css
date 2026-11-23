@@ -144,7 +144,7 @@ section { margin-bottom: 4px; }
 /* ===== Biểu mẫu ===== */
 .options-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px 22px;
   margin-top: 14px;
 }
@@ -894,3 +894,45 @@ section { margin-bottom: 4px; }
 .device-toggle button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 34px; padding: 0; border: 0; background: transparent; color: #64748b; cursor: pointer; }
 .device-toggle button.on { background: #ede9f7; color: var(--main-end, #4a2a8a); }
 .preview-block .svg-preview iframe.phone { width: 375px; max-width: 100%; display: block; margin: 0 auto; }
+
+/* ===== Bố cục biểu mẫu gọn: ô chọn chung lưới, ô tick gom một hàng ===== */
+.options-grid.content-grid .field:first-child { grid-column: 1 / -1; }
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid #ece7f8;
+  border-radius: 12px;
+  background: #faf9ff;
+}
+.options-grid.content-grid { grid-template-columns: 1fr 1fr; }
+.field input[type='text'],
+.field input[type='number'],
+.field input[type='date'],
+.field select { width: 100%; box-sizing: border-box; }
+@media (max-width: 700px) { .options-grid.content-grid { grid-template-columns: 1fr; } }
+
+/* Bước 5: bản xem trước không khung (trên trang thật cũng không có khung), bảng màu rộng hết hộp, cỡ chữ gọn */
+.preview-block .svg-preview iframe { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.color-boxes .picker { max-width: none; }
+.color-boxes .sv { height: 150px; }
+.box .size-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.box .size-field { min-width: 0; }
+.box .size-field input { width: 100%; box-sizing: border-box; }
+.color-boxes .picker { border: 0; box-shadow: none; padding: 0; background: transparent; }
+.export-grid { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 900px) { .export-grid { grid-template-columns: 1fr; } }
+
+/* Thanh gradient hai điểm màu: bấm chọn điểm rồi chỉnh màu bên dưới, bấm đúp để mở bảng màu hệ thống */
+.gbar-wrap { position: relative; height: 30px; margin: 4px 12px 2px; }
+.gbar { position: absolute; left: 0; right: 0; top: 6px; height: 18px; border-radius: 999px; border: 1px solid rgba(15, 23, 42, 0.18); }
+.gstop {
+  position: absolute; top: 15px; width: 22px; height: 22px; margin: 0; padding: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.45), 0 2px 5px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+}
+.gstop.on { box-shadow: 0 0 0 2px var(--main-end, #3b1b70), 0 2px 6px rgba(15, 23, 42, 0.3); transform: translate(-50%, -50%) scale(1.15); }
+.native-color { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; pointer-events: none; border: 0; padding: 0; }

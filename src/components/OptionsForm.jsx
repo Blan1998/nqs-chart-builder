@@ -25,16 +25,31 @@ const CHOICE_LABELS = {
 
 // Form tùy chọn sinh tự động từ trường "options" của file đặc tả
 export default function OptionsForm({ spec, values, onChange }) {
+  // Ô chọn / nhập nằm chung một lưới; các ô tick gom thành một hàng riêng bên dưới
+  const checks = spec.options.filter((o) => o.type === 'boolean');
+  const fields = spec.options.filter((o) => o.type !== 'boolean');
   return (
-    <div className="options-grid">
-      {spec.options.map((opt) => (
-        <Field
-          key={opt.key}
-          opt={opt}
-          value={values[opt.key]}
-          onChange={(v) => onChange(opt.key, v)}
-        />
-      ))}
+    <div>
+      <div className="options-grid">
+        {fields.map((opt) => (
+          <Field
+            key={opt.key}
+            opt={opt}
+            value={values[opt.key]}
+            onChange={(v) => onChange(opt.key, v)}
+          />
+        ))}
+      </div>
+      {checks.length > 0 && (
+        <div className="check-row">
+          {checks.map((opt) => (
+            <label key={opt.key} className="check-field">
+              <input type="checkbox" checked={!!values[opt.key]} onChange={(e) => onChange(opt.key, e.target.checked)} />
+              <span>{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -229,3 +229,20 @@ describe('Số thập phân thừa', () => {
     expect(t).not.toContain('0,0');
   });
 });
+
+describe('Lề trái/phải', () => {
+  const titleX = (svg) => Number([...parse(svg).querySelectorAll('text')].find((t) => t.getAttribute('font-size') === '35').getAttribute('x'));
+  it('lề trái mặc định 8 (lề phải 2 + 6); đổi được theo thiết lập', () => {
+    expect(titleX(draw('bar', { settings: { title: 'Tiêu đề' } }))).toBe(8);
+    expect(titleX(draw('bar', { settings: { title: 'Tiêu đề', pad: 0 } }))).toBe(6);
+    expect(titleX(draw('bar', { settings: { title: 'Tiêu đề', pad: 40 } }))).toBe(46);
+  });
+});
+
+describe('Khoảng trắng dưới đáy', () => {
+  it('dòng nguồn cách đáy ít nhất 40 để đoạn văn liền sau không bị dính', () => {
+    const svg = draw('bar', { settings: { height: 800 } });
+    const d = [...parse(svg).querySelectorAll('text')].find((t) => t.textContent.startsWith('Dữ liệu'));
+    expect(800 - Number(d.getAttribute('y'))).toBeGreaterThanOrEqual(40);
+  });
+});

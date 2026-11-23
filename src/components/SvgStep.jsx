@@ -272,28 +272,20 @@ export default function SvgStep({ spec, settings, options, rows, errors, colors,
               onColor={(v) => onSettingsChange({ ...settings, lineLabelColor: v })}
             />
           )}
-          {spec.options.some((o) => o.key === 'labelInside') && (
-            <label className="check-field">
-              <input type="checkbox" checked={!!options.labelInside}
-                onChange={(e) => onOptionChange('labelInside', e.target.checked)} />
-              <span>Số liệu nằm trong cột (tự đổi màu theo nền)</span>
-            </label>
-          )}
+          <p className="sub-title">Cỡ chữ</p>
+          <div className="size-row">
+            <SizeField label="Tiêu đề" value={settings.titleSize} fallback={35}
+              onSize={(v) => onSettingsChange({ ...settings, titleSize: v })} />
+            <SizeField label="Nhãn trục" value={settings.labelSize} fallback={16}
+              onSize={(v) => onSettingsChange({ ...settings, labelSize: v })} />
+            <SizeField label="Số liệu" value={settings.dataSize} fallback={18}
+              onSize={(v) => onSettingsChange({ ...settings, dataSize: v })} />
+          </div>
         </div>
       </div>
 
-      <h3 className="section-title">Cỡ chữ</h3>
-      <div className="size-row">
-        <SizeField label="Tiêu đề" value={settings.titleSize} fallback={35}
-          onSize={(v) => onSettingsChange({ ...settings, titleSize: v })} />
-        <SizeField label="Nhãn trục" value={settings.labelSize} fallback={16}
-          onSize={(v) => onSettingsChange({ ...settings, labelSize: v })} />
-        <SizeField label="Số liệu" value={settings.dataSize} fallback={18}
-          onSize={(v) => onSettingsChange({ ...settings, dataSize: v })} />
-      </div>
-
       <h3 className="section-title">Xuất file</h3>
-      <div className="options-grid">
+      <div className="options-grid export-grid">
         <Field label="Tên file SVG">
           <input type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
         </Field>

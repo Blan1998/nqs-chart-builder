@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   language: 'vi',
   width: 1000,
   height: null, // để trống = tự dãn theo nội dung
+  pad: 2, // lề phải của biểu đồ (px); lề trái = lề phải + 6
   showAxes: true,
   showGrid: true,
   showBrandLogo: true,
@@ -36,24 +37,11 @@ const INTERACTION_LABELS = [
   { key: 'zoomPan', label: 'Zoom và pan' },
 ];
 
-const SIZE_MIN = 300;
-const SIZE_MAX = 3000;
-
 export default function PresentationForm({ spec, settings, onChange }) {
   const set = (key, value) => onChange({ ...settings, [key]: value });
 
   const setInteraction = (key, value) =>
     onChange({ ...settings, interactions: { ...settings.interactions, [key]: value } });
-
-  const setSize = (key, raw) => {
-    if (raw === '') {
-      onChange({ ...settings, [key]: null });
-      return;
-    }
-    // Gõ dở dang (ví dụ "7") thì giữ nguyên số đang gõ, chỉ giới hạn khi vượt trần; khi vẽ sẽ dùng giá trị trong khoảng cho phép
-    const n = Math.min(SIZE_MAX, Number(raw));
-    onChange({ ...settings, [key]: n });
-  };
 
   const availableInteractions = INTERACTION_LABELS.filter((i) =>
     spec.interactions.includes(i.key)
@@ -64,7 +52,7 @@ export default function PresentationForm({ spec, settings, onChange }) {
     <div>
       <section>
         <h3>Nội dung</h3>
-        <div className="options-grid">
+        <div className="options-grid content-grid">
           <Field label="Tiêu đề">
             <input type="text" maxLength={TITLE_MAX} value={settings.title} onChange={(e) => set('title', e.target.value.slice(0, TITLE_MAX))} />
             {(settings.title || '').length > TITLE_MAX && (
@@ -90,48 +78,28 @@ export default function PresentationForm({ spec, settings, onChange }) {
       </section>
 
       <section>
-        <h3>Kích thước</h3>
-        <div className="options-grid">
-          <Field label={`Chiều rộng (px, ${SIZE_MIN}–${SIZE_MAX})`}>
-            <input type="number" min={SIZE_MIN} max={SIZE_MAX} value={settings.width ?? ''}
-              onChange={(e) => setSize('width', e.target.value)} />
-          </Field>
-          <Field label="Chiều cao (px) - để trống là tự động dãn đủ biểu đồ">
-            <input type="number" min={SIZE_MIN} max={SIZE_MAX} value={settings.height ?? ''} placeholder="Tự động"
-              onChange={(e) => setSize('height', e.target.value)} />
-          </Field>
+        <h3>Hiển thị và tương tác</h3>
+        <div className="check-row">
+          {hasAxes && (
+            <>
+              <CheckField label="Hiện trục tọa độ" checked={settings.showAxes}
+                onChange={(v) => set('showAxes', v)} />
+              <CheckField label="Hiện đường lưới" checked={settings.showGrid}
+                onChange={(v) => set('showGrid', v)} />
+            </>
+          )}
+          <CheckField label="Hiện logo NQS DATA" checked={settings.showBrandLogo !== false}
+            onChange={(v) => set('showBrandLogo', v)} />
+          {availableInteractions.map((i) => (
+            <CheckField
+              key={i.key}
+              label={i.label}
+              checked={!!settings.interactions[i.key]}
+              onChange={(v) => setInteraction(i.key, v)}
+            />
+          ))}
         </div>
       </section>
-
-      {hasAxes && (
-        <section>
-          <h3>Hiển thị</h3>
-          <div className="options-grid">
-            <CheckField label="Hiện trục tọa độ" checked={settings.showAxes}
-              onChange={(v) => set('showAxes', v)} />
-            <CheckField label="Hiện đường lưới" checked={settings.showGrid}
-              onChange={(v) => set('showGrid', v)} />
-            <CheckField label="Hiện logo NQS DATA" checked={settings.showBrandLogo !== false}
-              onChange={(v) => set('showBrandLogo', v)} />
-          </div>
-        </section>
-      )}
-
-      {availableInteractions.length > 0 && (
-        <section>
-          <h3>Tương tác</h3>
-          <div className="options-grid">
-            {availableInteractions.map((i) => (
-              <CheckField
-                key={i.key}
-                label={i.label}
-                checked={!!settings.interactions[i.key]}
-                onChange={(v) => setInteraction(i.key, v)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
